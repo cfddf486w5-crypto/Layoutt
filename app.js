@@ -15,7 +15,9 @@ const state = {
   rectFill:true, selected:new Set(), favorites:[],
   layerStates:Object.fromEntries(LAYERS.map(l=>[l,{visible:true,locked:false}])),
   blueprint:{src:'',img:null,opacity:.5,scale:1,offsetX:0,offsetY:0,locked:false},
-  cells:[], cellProps:{}, history:[], future:[], pointerStart:null, longPressTimer:null
+  cells:[], cellProps:{}, history:[], future:[], pointerStart:null, longPressTimer:null,
+  viewMode:'2d', view3d:null, view3dSelected:null,
+  view3dSettings:{wallHeight:2.6,wallThickness:0.2,quality:'high',showBlueprint:true,walkMode:false}
 };
 const catalog = window.TILE_CATALOG;
 const tileById = Object.fromEntries(catalog.map(t=>[t.id,t]));
@@ -55,7 +57,7 @@ function restore(s){Object.assign(state,s); state.selected=new Set(); loadBluepr
 function worldToCell(px,py){const x=Math.floor((px-state.panX)/(state.cellSize*state.zoom)); const y=Math.floor((py-state.panY)/(state.cellSize*state.zoom)); return {x,y}}
 function cellToScreen(x,y){const cs=state.cellSize*state.zoom; return {x:state.panX+x*cs,y:state.panY+y*cs,cs}}
 
-function renderAll(){resizeCanvas(); renderBlueprint(); ctx.clearRect(0,0,gridCanvas.width,gridCanvas.height); const cs=state.cellSize*state.zoom;
+function renderAll(){if(state.viewMode==='3d'){refresh3DIfOpen(); return;} resizeCanvas(); renderBlueprint(); ctx.clearRect(0,0,gridCanvas.width,gridCanvas.height); const cs=state.cellSize*state.zoom;
   for(let y=0;y<state.gridH;y++) for(let x=0;x<state.gridW;x++){
     const tile=state.cells[idx(x,y)]; if(tile==='empty') continue; const meta=tileById[tile]; if(!meta) continue; if(!state.layerStates[meta.layer]?.visible) continue;
     const p=cellToScreen(x,y); ctx.fillStyle=colorFor(meta); ctx.fillRect(p.x,p.y,cs,cs);
@@ -87,7 +89,7 @@ function renderPalette(){const tabs=document.getElementById('categoryTabs'); tab
 function toggleFav(id){state.favorites = [id, ...state.favorites.filter(f=>f!==id)].slice(0,10); save(); renderPalette();}
 function renderLayers(){const box=document.getElementById('layersBox'); box.innerHTML=''; LAYERS.forEach(l=>{const r=document.createElement('div');r.className='layer-row';
   r.innerHTML=`<span>${l}</span><label><input type="checkbox" ${state.layerStates[l].visible?'checked':''}/> visible</label><button>${state.layerStates[l].locked?'🔒':'🔓'}</button>`;
-  const cb=r.querySelector('input'); cb.onchange=()=>{state.layerStates[l].visible=cb.checked; renderAll(); save()}; r.querySelector('button').onclick=()=>{state.layerStates[l].locked=!state.layerStates[l].locked; renderLayers(); save()}; box.appendChild(r)
+  const cb=r.querySelector('input'); cb.onchange=()=>{state.layerStates[l].visible=cb.checked; renderAll(); refresh3DIfOpen(); save()}; r.querySelector('button').onclick=()=>{state.layerStates[l].locked=!state.layerStates[l].locked; renderLayers(); save()}; box.appendChild(r)
   })
 }
 function renderProps(){const box=document.getElementById('propsBox'); if(!state.selected.size){box.textContent='Aucune sélection.';return}
@@ -149,6 +151,14 @@ function bindUI(){
   document.getElementById('importJsonBtn').onclick=()=>importJsonInput.click();
   importJsonInput.onchange=e=>{const f=e.target.files[0]; if(!f) return; f.text().then(t=>{restore(JSON.parse(t)); save();})};
   document.getElementById('exportPngBtn').onclick=()=>{const c=document.createElement('canvas'); c.width=gridCanvas.width;c.height=gridCanvas.height;const cctx=c.getContext('2d'); cctx.drawImage(bpCanvas,0,0); cctx.drawImage(gridCanvas,0,0); download('layout.png',c.toDataURL('image/png'),'image/png',true)};
+  document.getElementById('toggle3dBtn').onclick=()=>toggle3D();
+  document.getElementById('wallHeightInput').oninput=e=>{state.view3dSettings.wallHeight=+e.target.value;refresh3DIfOpen();};
+  document.getElementById('wallThicknessInput').oninput=e=>{state.view3dSettings.wallThickness=+e.target.value;refresh3DIfOpen();};
+  document.getElementById('quality3dInput').onchange=e=>{state.view3dSettings.quality=e.target.value;refresh3DIfOpen();};
+  document.getElementById('showBp3dInput').onchange=e=>{state.view3dSettings.showBlueprint=e.target.checked;refresh3DIfOpen();};
+  document.getElementById('walkModeBtn').onclick=e=>{state.view3dSettings.walkMode=!state.view3dSettings.walkMode; e.target.textContent='Walk: '+(state.view3dSettings.walkMode?'ON':'OFF'); refresh3DIfOpen();};
+  document.getElementById('reset3dBtn').onclick=()=>state.view3d?.resetView();
+  document.getElementById('focus3dBtn').onclick=()=>state.view3d?.focusSelection();
   document.getElementById('bpOpacity').oninput=e=>{state.blueprint.opacity=+e.target.value;renderAll();save()};
   document.getElementById('bpScale').oninput=e=>{state.blueprint.scale=+e.target.value;renderAll();save()};
   document.getElementById('bpLockBtn').onclick=e=>{state.blueprint.locked=!state.blueprint.locked; e.target.textContent='Verrou blueprint: '+(state.blueprint.locked?'ON':'OFF');save()};
@@ -158,6 +168,47 @@ function bindUI(){
   window.addEventListener('keydown',e=>{if(e.key===' ') setTool('pan'); if(e.ctrlKey&&e.key==='z'){e.preventDefault();undoBtn.click();} if(e.ctrlKey&&e.key==='y'){e.preventDefault();redoBtn.click();} if(e.key==='Delete') deleteSelectionBtn.click();});
 }
 function download(name,data,type,isDataUrl){const a=document.createElement('a');a.download=name;a.href=isDataUrl?data:URL.createObjectURL(new Blob([data],{type}));a.click()}
+
+function visibleCellsSnapshot(){
+  return {
+    gridW:state.gridW,
+    gridH:state.gridH,
+    cellSize:state.cellSize,
+    cells:[...state.cells],
+    tileById,
+    layerStates:state.layerStates,
+    blueprint:state.blueprint
+  };
+}
+async function ensure3DView(){
+  if(state.view3d) return state.view3d;
+  const mod = await import('./view3d.js');
+  state.view3d = new mod.Layout3DView({
+    container:document.getElementById('view3dPanel'),
+    canvas:document.getElementById('view3dCanvas'),
+    infoEl:document.getElementById('view3dInfo'),
+    legendEl:document.getElementById('view3dLegend'),
+    onSelect:(data)=>{ state.view3dSelected=`${data.x},${data.y}`; }
+  });
+  return state.view3d;
+}
+async function toggle3D(){
+  const panel=document.getElementById('view3dPanel');
+  const is3D = state.viewMode === '3d';
+  if(is3D){
+    panel.classList.add('hidden');
+    state.viewMode='2d';
+    if(state.view3dSelected){ state.selected = new Set([state.view3dSelected]); renderProps(); }
+    renderAll();
+    return;
+  }
+  state.viewMode='3d';
+  panel.classList.remove('hidden');
+  const view = await ensure3DView();
+  view.setOptions(state.view3dSettings);
+  view.setLayout(visibleCellsSnapshot());
+}
+function refresh3DIfOpen(){ if(state.viewMode==='3d' && state.view3d){ state.view3d.setOptions(state.view3dSettings); state.view3d.setLayout(visibleCellsSnapshot()); } }
 
 if(!load()){demo(); save();}
 bindUI(); renderTools(); renderPalette(); renderLayers(); renderAll(); buildWarnings();

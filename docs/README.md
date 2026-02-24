@@ -15,6 +15,7 @@ Application web offline (sans dépendances) pour éditer un plan d'entrepôt en 
 - Blueprint image: import, opacity, scale, offset (Alt+drag), lock.
 - Export/Import JSON complet + autosave/restore.
 - Export PNG du plan.
+- Mode 3D offline (bouton `3D`) avec rotation, Walk, reset caméra, focus sélection et panneau infos.
 - Warnings: portes isolées, bins inconnus.
 - Undo/Redo avec historique.
 
@@ -33,3 +34,15 @@ Le projet démarre avec un mini entrepôt incluant racks, zones, portes et bins 
 4. Export JSON, recharger page, Import JSON => restauration complète.
 5. Export PNG et ouvrir l'image.
 6. Charger un blueprint puis modifier opacité/scale.
+
+
+## Mode 3D
+1. Cliquer sur `3D` dans la topbar pour basculer en vue maquette.
+2. Contrôles disponibles: Orbit (drag + wheel), `Walk`, `Reset view`, `Focus`.
+3. Ajuster `Hauteur murs`, `Épaisseur murs`, option blueprint au sol et qualité `Low/High`.
+4. Tap/clic sur un objet pour afficher `tileId`, label et coordonnées.
+5. En revenant en 2D, la dernière sélection 3D est surlignée.
+
+### Notes performance
+- Les objets répétitifs sont simplifiés en mode `Low` (échantillonnage 1 cellule sur 2).
+- Palette de matériaux réduite (couleurs unies) pour conserver la fluidité mobile.
