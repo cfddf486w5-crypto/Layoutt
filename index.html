@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="DL Layout" />
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
   <link rel="manifest" href="manifest.webmanifest" />
   <title>Damour Logistique — SHOP Layout PRO (V9)</title>
 
@@ -447,6 +447,33 @@
       border: 1px solid rgba(0,180,255,0.22);
     }
 
+    #iphoneQuickBar{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      z-index: 70;
+      display: none;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      width: min(92vw, 420px);
+      padding: 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(148,163,184,0.24);
+      background: rgba(10,16,28,0.84);
+      backdrop-filter: blur(12px);
+    }
+    .qbtn{
+      border: 1px solid var(--border);
+      background: rgba(17,24,39,0.88);
+      color: var(--text);
+      border-radius: 10px;
+      min-height: 42px;
+      font-size: 18px;
+      font-weight: 950;
+    }
+    .qbtn.qsave{ background: linear-gradient(135deg, var(--brand), var(--brand2)); }
+
     /* List */
     .list{
       max-height: 320px;
@@ -475,6 +502,8 @@
       details.menu > summary{ padding: 8px 10px; }
       .badge{ max-width: 42vw; }
       .brand{ min-width: 100%; }
+      #iphoneQuickBar{ display:grid; }
+      #binWizard{ bottom: calc(84px + env(safe-area-inset-bottom)); }
     }
   
     /* ===== Layout Background (template) ===== */
@@ -526,7 +555,7 @@
 <header>
   <div class="top">
     <div class="brand">
-      <img src="branding/dl-cube-512.png" alt="DL" />
+      <img src="./icon-512.png" alt="DL" />
       <div class="brandTxt">
         <div class="t">Damour Logistique <span style="opacity:.7">• V9</span></div>
         <div class="s">SHOP Layout PRO — Rapport de plan plancher</div>
@@ -796,6 +825,13 @@
     <div id="selBox"></div>
   </div>
 </div>
+
+<nav id="iphoneQuickBar" aria-label="Actions rapides iPhone">
+  <button class="qbtn" id="qUndo" type="button">↶</button>
+  <button class="qbtn" id="qRedo" type="button">↷</button>
+  <button class="qbtn qsave" id="qSave" type="button">💾</button>
+  <button class="qbtn" id="qFind" type="button">🔎</button>
+</nav>
 
 <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div id="modalContent">

@@ -1,13 +1,24 @@
-// SHOP Layout – Service Worker (V7)
-const CACHE_NAME = 'shop-layout-v7-2026-02-11';
+// SHOP Layout – Service Worker (V10)
+const CACHE_NAME = 'shop-layout-v10-2026-02-24';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './service-worker.js',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/apple-touch-icon.png'
+  './icon-192.png',
+  './icon-512.png',
+  './apple-touch-icon.png',
+  './layout-langelier.jpg',
+  './src/main.js',
+  './src/model/grid.js',
+  './src/model/layoutState.js',
+  './src/model/caseTypes.js',
+  './src/model/binModels.js',
+  './src/ui/render.js',
+  './src/services/storage.js',
+  './src/services/export.js',
+  './src/audit/index.js',
+  './src/adapters/visionAdapter.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -28,20 +39,36 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+  if (req.method !== 'GET') return;
+
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req)
+        .then((resp) => {
+          const copy = resp.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy));
+          return resp;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;
-      return fetch(req).then((resp) => {
-        const copy = resp.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-        return resp;
-      }).catch(() => {
-        if (req.mode === 'navigate') return caches.match('./index.html');
-        return cached;
-      });
+      return fetch(req)
+        .then((resp) => {
+          if (resp && resp.status === 200) {
+            const copy = resp.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          }
+          return resp;
+        })
+        .catch(() => caches.match('./index.html'));
     })
   );
 });

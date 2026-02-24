@@ -713,7 +713,7 @@ if(bgImportBtn && bgFile){
 if(bgDefaultBtn){
   bgDefaultBtn.addEventListener('click', () => {
     // default image packaged alongside index.html
-    bgSetDataUrl('assets/layout-langelier.jpg');
+    bgSetDataUrl('./layout-langelier.jpg');
   });
 }
 
@@ -1089,7 +1089,9 @@ updateViewClasses();
 // Online status
 function updateOnline(){
   const online = navigator.onLine;
-  onlineBadge.textContent = online ? '✅ En ligne' : '📴 Hors ligne';
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const mode = standalone ? ' • iPhone lié' : '';
+  onlineBadge.textContent = online ? ('✅ En ligne' + mode) : ('📴 Hors ligne' + mode);
   onlineBadge.className = 'badge ' + (online ? 'ok' : 'warn');
 }
 window.addEventListener('online', updateOnline);
@@ -1540,7 +1542,7 @@ function drawCoverPage(){
 
       resolve(c);
     };
-    img.src = 'branding/dl-cube-512.png';
+    img.src = './icon-512.png';
   });
 }
 
@@ -1780,6 +1782,10 @@ document.getElementById('btnExportPdf').addEventListener('click', exportPdfPro);
 // Install prompt
 let deferredPrompt = null;
 const btnInstall = document.getElementById('btnInstall');
+const qUndoBtn = document.getElementById('qUndo');
+const qRedoBtn = document.getElementById('qRedo');
+const qSaveBtn = document.getElementById('qSave');
+const qFindBtn = document.getElementById('qFind');
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
@@ -1792,11 +1798,31 @@ btnInstall.addEventListener('click', async () => {
   deferredPrompt = null;
 });
 
+qUndoBtn?.addEventListener('click', undo);
+qRedoBtn?.addEventListener('click', redo);
+qSaveBtn?.addEventListener('click', () => document.getElementById('btnSaveLocal')?.click());
+qFindBtn?.addEventListener('click', () => {
+  const menu = document.getElementById('menuSearch');
+  if(menu) menu.setAttribute('open', '');
+  searchInput?.focus();
+});
+
+let lastAutoSaveAt = 0;
+setInterval(() => {
+  if(!dirty) return;
+  if(!navigator.onLine && Date.now() - lastAutoSaveAt < 15000) return;
+  try{
+    saveLayoutToStorage(JSON.stringify(exportObj()));
+    lastAutoSaveAt = Date.now();
+    markLastSave();
+  }catch{}
+}, 12000);
+
 // Service Worker
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./service-worker.js')
-      .then(() => console.log('SW OK'))
+      .then(() => toast('Mode hors connexion prêt'))
       .catch(err => console.warn('SW fail', err));
   });
 }
