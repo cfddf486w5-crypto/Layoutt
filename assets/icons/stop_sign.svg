@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" >
+  <g stroke="white" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 5 H15 L19 9 V15 L15 19 H9 L5 15 V9 Z"/>
+    <text x="12" y="13" font-size="7" fill="white" stroke="none" text-anchor="middle" dominant-baseline="middle">STOP</text>
+  </g>
+</svg>
