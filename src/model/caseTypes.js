@@ -11,15 +11,15 @@ const DEFAULT_CASE_TYPE = {
 };
 
 const CATEGORY_RULES = [
-  { matcher: (id) => id.startsWith('wall') || id === 'column' || id === 'dock-pillar' || id === 'barrier-guardrail' || id === 'floor-opening' || id === 'window', category: 'structure', layer: 'base', zIndex: 90, walkable: false, blocksMovement: true, colorTag: 'neutral' },
-  { matcher: (id) => id.startsWith('door') || id.startsWith('gate') || id === 'curtain-industrial', category: 'access', layer: 'overlay', zIndex: 80, walkable: true, blocksMovement: false, colorTag: 'info' },
-  { matcher: (id) => id.startsWith('rack') || id === 'mezzanine' || id === 'bin-slot' || id.startsWith('bin-') || id === 'floor-stack' || id === 'cage-value' || id === 'empty-pallets', category: 'storage', layer: 'base', zIndex: 70, walkable: false, blocksMovement: true, colorTag: 'neutral' },
-  { matcher: (id) => id.startsWith('zone-') || id.startsWith('virtual-') || id === 'tote-zone', category: 'zone', layer: 'overlay', zIndex: 60, walkable: true, blocksMovement: false, colorTag: 'zone' },
-  { matcher: (id) => id === 'danger-zone' || id === 'stop-mandatory' || id === 'extinguisher' || id === 'eyewash' || id === 'emergency-exit' || id === 'assembly-point' || id === 'emergency-station', category: 'safety', layer: 'overlay', zIndex: 75, walkable: true, blocksMovement: false, colorTag: 'danger' },
-  { matcher: (id) => id === 'work' || id === 'charger' || id === 'electrical' || id === 'conveyor' || id === 'lift-table' || id === 'wrap-station' || id === 'battery-charge', category: 'equipment', layer: 'base', zIndex: 65, walkable: false, blocksMovement: true, colorTag: 'info' },
-  { matcher: (id) => id === 'text-label' || id === 'aisle-number' || id === 'measure-marker' || id === 'line-separator' || id === 'icon-info', category: 'annotation', layer: 'annotation', zIndex: 40, walkable: true, blocksMovement: false, colorTag: 'info' },
-  { matcher: (id) => id === 'operator-spawn' || id === 'entry-exit-point' || id === 'customer-counter' || id === 'toilet' || id === 'locker-room' || id === 'mechanical-room' || id === 'it-closet' || id === 'waste-recycling' || id === 'cafeteria' || id === 'office' || id === 'dock' || id === 'dock-leveler' || id === 'ramp', category: 'service', layer: 'base', zIndex: 55, walkable: true, blocksMovement: false, colorTag: 'info' },
-  { matcher: (id) => id === 'road' || id === 'lane-pedestrian' || id === 'lane-forklift' || id === 'one-way' || id === 'no-entry' || id === 'crosswalk', category: 'wms', layer: 'overlay', zIndex: 58, walkable: true, blocksMovement: false, colorTag: 'info' }
+  { matcher: (id) => id.startsWith('wall_') || id === 'pillar_column' || id === 'guard_rail' || id === 'curb_barrier' || id === 'window_opening' || id === 'floor_hole', category: 'structure', layer: 'base', zIndex: 90, walkable: false, blocksMovement: true, colorTag: 'neutral' },
+  { matcher: (id) => id.startsWith('door_') || id === 'gate_cage' || id === 'curtain_strip' || id === 'dock_door' || id === 'turnstile', category: 'access', layer: 'base', zIndex: 88, walkable: true, blocksMovement: false, colorTag: 'info' },
+  { matcher: (id) => id === 'aisle_walkway' || id === 'aisle_forklift' || id.startsWith('oneway_') || id === 'crosswalk' || id === 'stop_sign' || id === 'no_entry' || id === 'hazard_zone', category: 'safety', layer: 'overlay', zIndex: 45, walkable: true, blocksMovement: false, colorTag: 'danger' },
+  { matcher: (id) => id.startsWith('rack_') || id === 'shelving' || id === 'mezzanine' || id === 'floor_stack' || id === 'empty_pallet_area' || id === 'tote_area' || id === 'cage_storage', category: 'storage', layer: 'base', zIndex: 82, walkable: false, blocksMovement: true, colorTag: 'neutral' },
+  { matcher: (id) => id.startsWith('bin_') || id === 'reception_staging', category: 'wms', layer: 'base', zIndex: 82, walkable: false, blocksMovement: true, colorTag: 'info' },
+  { matcher: (id) => id.startsWith('zone_'), category: 'zone', layer: 'base', zIndex: 25, walkable: true, blocksMovement: false, colorTag: 'zone' },
+  { matcher: (id) => id === 'dock_platform' || id === 'dock_leveler' || id === 'ramp' || id.startsWith('conveyor_') || id === 'lift_table' || id === 'wrap_station' || id === 'scale_station' || id === 'printer_station' || id === 'battery_charging', category: 'equipment', layer: 'base', zIndex: 55, walkable: true, blocksMovement: false, colorTag: 'info' },
+  { matcher: (id) => id === 'office' || id === 'customer_counter' || id === 'toilet' || id === 'cafeteria' || id === 'locker_room' || id === 'electrical_room' || id === 'it_closet', category: 'service', layer: 'base', zIndex: 40, walkable: true, blocksMovement: false, colorTag: 'info' },
+  { matcher: (id) => id === 'label_text' || id === 'marker_entry' || id === 'marker_exit' || id === 'marker_measure', category: 'annotation', layer: 'annotation', zIndex: 95, walkable: true, blocksMovement: false, colorTag: 'info' }
 ];
 
 function normalizeExportCode(id) {
