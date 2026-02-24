@@ -42,6 +42,12 @@ const onlineBadge = document.getElementById('onlineBadge');
 const toastEl = document.getElementById('toast');
 const zoneSelect = document.getElementById('zoneSelect');
 const cellFractionEl = document.getElementById('cellFraction');
+const kpiSurfaceEl = document.getElementById('kpiSurface');
+const kpiOccupancyEl = document.getElementById('kpiOccupancy');
+const kpiComplianceEl = document.getElementById('kpiCompliance');
+const kpiLastSaveEl = document.getElementById('kpiLastSave');
+const helpModal = document.getElementById('helpModal');
+const closeHelpModalBtn = document.getElementById('closeHelpModal');
 
 // Layout background
 const bgEl = document.getElementById('bgLayout');
@@ -108,6 +114,7 @@ const LOCATION_TYPE_MAP = {"L3A02": "P2", "L3A04": "P2", "L3A06": "P2", "L3A08":
 
 const CELL_INCH = 50;
 const CELL_FEET = +(CELL_INCH / 12).toFixed(4);
+const CELL_SURFACE_FT2 = +((CELL_INCH / 12) * (CELL_INCH / 12)).toFixed(2);
 
 const PLAN_TOOLS = new Set([
   'work', 'office', 'charger', 'electrical', 'shelving', 'racking', 'road', 'roadstop', 'cafeteria', 'garage', 'stairs'
@@ -166,6 +173,15 @@ function setDirty(v){
   dirty = v;
   dirtyBadge.textContent = dirty ? 'Non sauvegardé' : 'OK';
   dirtyBadge.className = 'badge ' + (dirty ? 'warn' : 'ok');
+}
+
+function markLastSave(){
+  if(!kpiLastSaveEl) return;
+  kpiLastSaveEl.textContent = new Date().toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' });
+}
+
+function setComplianceKpi(text){
+  if(kpiComplianceEl) kpiComplianceEl.textContent = text;
 }
 
 function snapshot(){
@@ -862,7 +878,7 @@ fileImport.addEventListener('change', async () => {
 // Local save/load
 
 document.getElementById('btnSaveLocal').addEventListener('click', () => {
-  try{ saveLayoutToStorage( JSON.stringify(exportObj())); setDirty(false); toast('Sauvegardé'); }
+  try{ saveLayoutToStorage( JSON.stringify(exportObj())); setDirty(false); markLastSave(); toast('Sauvegardé'); }
   catch{ toast('Sauvegarde impossible'); }
 });
 
@@ -879,6 +895,7 @@ document.getElementById('btnLoadLocal').addEventListener('click', () => {
     }
     renderAll();
     setDirty(false);
+    markLastSave();
     toast('Chargé');
     refreshBinList();
   }catch{ toast('Erreur de chargement'); }
@@ -1174,6 +1191,8 @@ function runAuditReport(){
     auditList.appendChild(div);
   }
 
+  setComplianceKpi(dangerCount ? `⚠️ ${dangerCount} critique(s)` : (warnCount ? `🟠 ${warnCount} avert.` : '✅ Conforme'));
+
   toast('Audit terminé');
   return {issues};
 }
@@ -1183,9 +1202,11 @@ document.getElementById('btnRunAudit').addEventListener('click', runAuditReport)
 // STATS
 function updateStats(){
   let bins=0, walls=0, doors=0, works=0, labeled=0;
+  let occupied=0;
   let zA=0,zB=0,zC=0,zD=0;
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     const d = gridData[r][c];
+    if(d.type !== 'empty') occupied++;
     if(d.type==='bin') bins++;
     if(d.type==='wall') walls++;
     if(d.type==='door') doors++;
@@ -1195,6 +1216,10 @@ function updateStats(){
   }
   const sel = selection.size ? ` • sel:${selection.size}` : '';
   statsEl.textContent = `BIN:${bins} Mur:${walls} Porte:${doors} Aménagements:${works} Labels:${labeled} | ${zoneName('A')}:${zA} ${zoneName('B')}:${zB} ${zoneName('C')}:${zC} ${zoneName('D')}:${zD}${sel}`;
+  const totalCells = ROWS * COLS;
+  const occupancy = totalCells ? Math.round((occupied / totalCells) * 100) : 0;
+  if(kpiSurfaceEl) kpiSurfaceEl.textContent = `${Math.round(totalCells * CELL_SURFACE_FT2)} pi²`;
+  if(kpiOccupancyEl) kpiOccupancyEl.textContent = `${occupancy}%`;
 }
 
 // PDF Export (canvas pages -> embedded JPEG PDF)
@@ -1632,17 +1657,11 @@ if('serviceWorker' in navigator){
 // Help
 
 document.getElementById('btnHelp').addEventListener('click', () => {
-  alert(
-    'Damour Logistique — SHOP Layout PRO V9\n\n' +
-    '• Outils: BIN+, BIN, Texte, Mur, Porte, Poste, Vide\n' +
-    '• Sélection rectangle: active puis glisse\n' +
-    '• Copier/Coller: copier un bloc, cliquer une case, coller\n' +
-    '• Zones: applique A/B/C/D + noms personnalisés\n' +
-    '• BIN: liste + export CSV\n' +
-    '• Audit: détecte problèmes et centre la vue\n' +
-    '• Export PDF Pro: 5 pages (couverture/plan/légende/BIN/audit)\n\n' +
-    'Important PWA iPhone: il faut une URL HTTPS (pas file://)\n'
-  );
+  if(helpModal) helpModal.style.display = 'flex';
+});
+closeHelpModalBtn?.addEventListener('click', () => { if(helpModal) helpModal.style.display = 'none'; });
+helpModal?.addEventListener('click', (e) => {
+  if(e.target === helpModal) helpModal.style.display = 'none';
 });
 
 // Stats init
@@ -1870,6 +1889,7 @@ try{
       }
       renderAll();
       setDirty(false);
+      markLastSave();
       toast('Sauvegarde auto chargée');
     }
   }

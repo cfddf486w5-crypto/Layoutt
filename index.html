@@ -221,6 +221,26 @@
       gap: 10px;
     }
 
+    .proBoard{
+      margin: 0 12px 12px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(11,61,145,0.16), rgba(17,24,39,0.9));
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 8px;
+    }
+
+    .kpi{
+      border: 1px solid rgba(148,163,184,0.18);
+      border-radius: 12px;
+      padding: 8px 10px;
+      background: rgba(10,16,28,0.65);
+    }
+    .kpi .l{ font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); font-weight: 900; }
+    .kpi .v{ margin-top: 4px; font-size: 15px; font-weight: 950; color: #eef4ff; }
+
     .switch{
       display:flex;
       align-items:center;
@@ -372,7 +392,8 @@
     }
 
     /* Modal BIN */
-    #modal{
+    #modal,
+    #helpModal{
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.55);
@@ -402,6 +423,9 @@
     .modalTop p{ margin: 4px 0 0 0; font-size: 12px; color: var(--muted); font-weight: 850; }
     .modalBody{ padding: 12px 14px 14px 14px; }
     .modalButtons{ padding: 0 14px 14px 14px; display:flex; gap: 8px; justify-content:flex-end; }
+
+    #helpModal .modalBody ul{ margin: 0; padding-left: 18px; }
+    #helpModal .modalBody li{ margin-bottom: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
 
     /* Toast */
     #toast{
@@ -447,6 +471,7 @@
 
     @media (max-width: 740px){
       #main{ top: 132px; }
+      .proBoard{ grid-template-columns: repeat(2, minmax(120px, 1fr)); }
       details.menu > summary{ padding: 8px 10px; }
       .badge{ max-width: 42vw; }
       .brand{ min-width: 100%; }
@@ -750,6 +775,13 @@
     <span id="hintText">Mode : Création de BIN – clic 1 = première extrémité.</span>
     <span class="badge" id="toolBadge">outil: binrange</span>
   </div>
+
+  <div class="proBoard" aria-label="Tableau de bord">
+    <div class="kpi"><div class="l">Surface totale</div><div class="v" id="kpiSurface">0 pi²</div></div>
+    <div class="kpi"><div class="l">Occupation plan</div><div class="v" id="kpiOccupancy">0%</div></div>
+    <div class="kpi"><div class="l">Conformité audit</div><div class="v" id="kpiCompliance">—</div></div>
+    <div class="kpi"><div class="l">Dernière sauvegarde</div><div class="v" id="kpiLastSave">Jamais</div></div>
+  </div>
 </header>
 
 <div id="main">
@@ -784,6 +816,27 @@
 </div>
 
 <div id="toast"></div>
+
+<div id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div id="modalContent">
+    <div class="modalTop">
+      <h2 id="helpTitle">Guide Pro — SHOP Layout</h2>
+      <p>Checklist opérationnelle pour un plan prêt à vendre / déployer.</p>
+    </div>
+    <div class="modalBody">
+      <ul>
+        <li>Crée les allées principales avec <strong>Route</strong> puis les zones d'opération (A/B/C/D).</li>
+        <li>Utilise <strong>BIN+</strong> pour générer rapidement des lignes complètes et cohérentes.</li>
+        <li>Lance l'<strong>Audit</strong> avant export pour corriger les points critiques.</li>
+        <li>Exporte en <strong>PDF Pro</strong> pour partager un livrable commercial client.</li>
+        <li>Installe l'app en PWA pour un usage terrain hors connexion.</li>
+      </ul>
+    </div>
+    <div class="modalButtons">
+      <button class="btn primary" id="closeHelpModal">Compris</button>
+    </div>
+  </div>
+</div>
 
 <div id="binWizard" aria-live="polite">
   <div class="bwTop">
