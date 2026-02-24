@@ -848,7 +848,7 @@
   </div>
   <div class="bwBody">
     <div class="bwMsg" id="bwMsg">Choisis la 1ère case (départ).</div>
-    <div class="bwSub" id="bwSub">Max 10 cases. Chaque case = 48×48 pouces (4×4 pieds).</div>
+    <div class="bwSub" id="bwSub">Max 10 cases. Chaque case = 48×48 pouces (4.00×4.00 pieds).</div>
     <div class="bwProgress"><div id="bwBar"></div></div>
 
     <div id="bwForm" style="display:none; margin-top:10px;">
@@ -875,9 +875,17 @@
         </div>
         <div class="field" style="grid-column: 1 / -1;">
           <label>Type / Modèle de casse</label>
-          <input id="bwTypeSearch" placeholder="Recherche rapide (P, BULK, COLD...)" autocomplete="off" />
+          <input id="bwTypeSearch" placeholder="Recherche rapide (P, BULK, MUR...)" autocomplete="off" />
           <select id="bwType" style="margin-top:8px;"></select>
           <div class="bwInlineHint" id="bwModelInfo">Modèle P7 · Palette très grande</div>
+        </div>
+        <div class="field">
+          <label>Dimension d'une case (pouces)</label>
+          <input id="bwCellSize" type="number" min="12" max="200" value="48" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label>Volume total (nb. cases)</label>
+          <input id="bwMaxCells" type="number" min="2" max="40" value="10" inputmode="numeric" />
         </div>
       </div>
 

@@ -48,7 +48,10 @@ const BASE_MODELS = [
   { code: 'IND-03', label: 'Outillage', category: 'Industriel' },
   { code: 'IND-04', label: 'Équipement', category: 'Industriel' },
   { code: 'IND-05', label: 'Production', category: 'Industriel' },
-  { code: 'VIP-01', label: 'Priorité client', category: 'Service' }
+  { code: 'VIP-01', label: 'Priorité client', category: 'Service' },
+  { code: 'MUR', label: 'Mur plein', category: 'Structure' },
+  { code: 'DEMI-MUR', label: 'Demi-mur', category: 'Structure' },
+  { code: 'MUR-ANGLE', label: 'Mur en angle', category: 'Structure' }
 ];
 
 const modelMap = new Map(BASE_MODELS.map((model) => [model.code, model]));
@@ -58,7 +61,10 @@ const aliasMap = new Map([
   ['TEMPORAIRE 1', 'TEMP-01'],
   ['TEMPORAIRE 2', 'TEMP-02'],
   ['TEMPORAIRE 3', 'TEMP-03'],
-  ['RACK', 'RACKING']
+  ['RACK', 'RACKING'],
+  ['MUR PLEIN', 'MUR'],
+  ['DEMI MUR', 'DEMI-MUR'],
+  ['MUR EN ANGLE', 'MUR-ANGLE']
 ]);
 
 export function listBinModels() {
@@ -72,6 +78,9 @@ export function normalizeBinModel(value) {
   if (/^P[1-7]$/.test(raw)) return raw;
   if (raw.includes('RACK')) return 'RACKING';
   if (raw.includes('MAG')) return 'MAGASIN';
+  if (raw.includes('ANGLE')) return 'MUR-ANGLE';
+  if (raw.includes('DEMI') && raw.includes('MUR')) return 'DEMI-MUR';
+  if (raw.includes('MUR')) return 'MUR';
   if (aliasMap.has(raw)) return aliasMap.get(raw);
   return raw;
 }
