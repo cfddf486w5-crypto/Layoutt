@@ -488,6 +488,7 @@
     #binWizard .bwMsg{ font-size:12px; font-weight:900; color: rgba(245,248,255,0.92); }
     #binWizard .bwSub{ font-size:11px; font-weight:850; color: rgba(183,196,216,0.90); margin-top:4px; }
     #binWizard .bwGrid{ margin-top:10px; display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+    #binWizard .bwInlineHint{ margin-top:8px; font-size:11px; color: rgba(125,211,252,0.95); font-weight:850; }
     #binWizard .bwActions{ margin-top:10px; display:flex; gap:8px; justify-content:flex-end; }
     #binWizard .bwActions .btn{ width:auto; }
     #binWizard .bwProgress{ height:6px; background: rgba(148,163,184,0.18); border-radius:999px; overflow:hidden; margin-top:10px; }
@@ -820,18 +821,10 @@
           <input id="bwSuffix" placeholder="A" maxlength="2" />
         </div>
         <div class="field" style="grid-column: 1 / -1;">
-          <label>Type</label>
-          <select id="bwType">
-            <option value="P1">P1</option>
-            <option value="P2">P2</option>
-            <option value="P3">P3</option>
-            <option value="P4">P4</option>
-            <option value="P5">P5</option>
-            <option value="P6">P6</option>
-            <option value="P7" selected>P7</option>
-            <option value="MAGASIN">MAGASIN</option>
-            <option value="RACKING">RACKING</option>
-          </select>
+          <label>Type / Modèle de casse</label>
+          <input id="bwTypeSearch" placeholder="Recherche rapide (P, BULK, COLD...)" autocomplete="off" />
+          <select id="bwType" style="margin-top:8px;"></select>
+          <div class="bwInlineHint" id="bwModelInfo">Modèle P7 · Palette très grande</div>
         </div>
       </div>
 

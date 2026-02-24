@@ -1,6 +1,7 @@
 
 import { ROWS, COLS, createDefaultCell as DEFAULT_CELL, createEmptyGrid, cellKey } from './model/grid.js';
 import { createLayoutState } from './model/layoutState.js';
+import { listBinModels, normalizeBinModel, getBinModelMeta, getCapacityLabel } from './model/binModels.js';
 import { applyCellVisual as renderCell } from './ui/render.js';
 import { loadLayoutFromStorage, saveLayoutToStorage, loadZoneNamesFromStorage, saveZoneNamesToStorage } from './services/storage.js';
 import { buildExportObject } from './services/export.js';
@@ -150,17 +151,6 @@ function fractionLabel(value){
 function typeColor(type){
   return TYPE_COLORS[type] || null;
 }
-
-// Capacité palettes (P1..P7)
-const P_CAPACITY = {
-  P1: {min:1,max:3},
-  P2: {min:4,max:6},
-  P3: {min:7,max:9},
-  P4: {min:10,max:12},
-  P5: {min:13,max:15},
-  P6: {min:16,max:18},
-  P7: {min:19,max:21},
-};
 
 const MAX_BIN_CELLS = 10;
 
@@ -1665,6 +1655,44 @@ document.getElementById('btnFit').click;
 
 // ===== BIN Wizard logic =====
 const bw = {};
+
+function populateBinModelSelect(){
+  const typeEl = document.getElementById('bwType');
+  if(!typeEl) return;
+  const selected = normalizeType(typeEl.value || 'P7');
+  typeEl.innerHTML = '';
+
+  const byCategory = new Map();
+  for(const model of listBinModels()){
+    const key = model.category || 'Autres';
+    if(!byCategory.has(key)) byCategory.set(key, []);
+    byCategory.get(key).push(model);
+  }
+
+  for(const [category, models] of byCategory.entries()){
+    const group = document.createElement('optgroup');
+    group.label = category;
+    for(const model of models){
+      const option = document.createElement('option');
+      option.value = model.code;
+      option.textContent = `${model.code} — ${model.label}`;
+      group.appendChild(option);
+    }
+    typeEl.appendChild(group);
+  }
+
+  typeEl.value = selected;
+}
+
+function filterBinModelSelect(term){
+  const typeEl = document.getElementById('bwType');
+  if(!typeEl) return;
+  const q = String(term || '').trim().toUpperCase();
+  for(const option of typeEl.querySelectorAll('option')){
+    const hay = `${option.value} ${option.textContent}`.toUpperCase();
+    option.hidden = !!q && !hay.includes(q);
+  }
+}
 function bwInit(){
   bw.el = document.getElementById('binWizard');
   bw.stepEl = document.getElementById('bwStep');
@@ -1678,6 +1706,8 @@ function bwInit(){
   bw.slotEl = document.getElementById('bwSlot');
   bw.suffixEl = document.getElementById('bwSuffix');
   bw.typeEl = document.getElementById('bwType');
+  bw.modelInfoEl = document.getElementById('bwModelInfo');
+  bw.typeSearchEl = document.getElementById('bwTypeSearch');
   bw.validateBtn = document.getElementById('bwValidate');
   bw.resetBtn = document.getElementById('bwReset');
   bw.hideBtn = document.getElementById('bwHide');
@@ -1685,6 +1715,7 @@ function bwInit(){
   bw.resetBtn?.addEventListener('click', () => { resetBinRangeState(); clearBinPreview(); bwShow(1); });
   bw.hideBtn?.addEventListener('click', () => { bw.el.style.display = 'none'; });
   ;[bw.zoneAbsEl,bw.aisleEl,bw.slotEl,bw.suffixEl,bw.typeEl].forEach(el=>{ el?.addEventListener('input', bwRefreshComputed); el?.addEventListener('change', bwRefreshComputed); });
+  bw.typeSearchEl?.addEventListener('input', () => { filterBinModelSelect(bw.typeSearchEl.value); });
   bw.validateBtn?.addEventListener('click', bwValidateAndCreate);
 }
 
@@ -1696,7 +1727,7 @@ function bwShow(step){
   if(step===1){ bw.stepEl.textContent='Étape 1/4'; bw.msgEl.textContent='Choisis la 1ère case (départ).'; bw.formEl.style.display='none'; bw.validateBtn.disabled=true; }
   if(step===2){ bw.stepEl.textContent='Étape 2/4'; bw.msgEl.textContent='Choisis la 2e case (même ligne/colonne).'; bw.formEl.style.display='none'; bw.validateBtn.disabled=true; }
   if(step===3){ bw.stepEl.textContent='Étape 3/4'; bw.msgEl.textContent='Clique une extrémité pour définir la TÊTE.'; bw.formEl.style.display='none'; bw.validateBtn.disabled=true; }
-  if(step===4){ bw.stepEl.textContent='Étape 4/4'; bw.msgEl.textContent='Entre Zone + Allée + Emplacement (et suffixe).'; bw.formEl.style.display='block'; bwRefreshComputed(); }
+  if(step===4){ bw.stepEl.textContent='Étape 4/4'; bw.msgEl.textContent='Entre Zone + Allée + Emplacement (et suffixe).'; bw.formEl.style.display='block'; if(bw.typeSearchEl) bw.typeSearchEl.value=''; filterBinModelSelect(''); bwRefreshComputed(); }
 }
 
 function formatSlot2(v){
@@ -1714,16 +1745,11 @@ function bwFullCode(){
 }
 
 function normalizeType(t){
-  const s = String(t||'').trim().toUpperCase();
-  if(/^P[1-7]$/.test(s)) return s;
-  if(s.includes('RACK')) return 'RACKING';
-  if(s.includes('MAG')) return 'MAGASIN';
-  return s;
+  return normalizeBinModel(t);
 }
 
 function pRangeText(p){
-  const r=P_CAPACITY[p];
-  return r ? `${r.min}–${r.max} palettes` : '';
+  return getCapacityLabel(p);
 }
 
 function bwRefreshComputed(){
@@ -1741,9 +1767,15 @@ function bwRefreshComputed(){
   }
 
   const t=normalizeType(bw.typeEl.value);
-  const pr = /^P[1-7]$/.test(t) ? pRangeText(t) : '';
+  const pr = pRangeText(t);
+  const modelMeta = getBinModelMeta(t);
 
   bw.computedEl.textContent = `Code: ${info.ok?info.code:'(incomplet)'} • Cases: ${count} (50" x 50", ≈ ${ft} pieds) • Type: ${t} ${pr?('('+pr+')'):''}`;
+  if(bw.modelInfoEl){
+    bw.modelInfoEl.textContent = modelMeta
+      ? `Modèle ${modelMeta.code} · ${modelMeta.label}${modelMeta.category ? ` · ${modelMeta.category}` : ''}`
+      : `Modèle personnalisé · ${t}`;
+  }
   bw.validateBtn.disabled = !(info.ok && binRangeState.head && count>=2);
 }
 
@@ -1817,6 +1849,7 @@ function bwValidateAndCreate(){
 
 // Init
 createGrid();
+populateBinModelSelect();
   bwInit();
   bwShow(1);
 setDirty(true);
