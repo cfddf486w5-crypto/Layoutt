@@ -41,6 +41,8 @@ const state = {
   viewMode:'2d', view3d:null, view3dSelected:null,
   view3dSettings:{wallHeight:2.6,wallThickness:0.2,quality:'high',showBlueprint:true,walkMode:false}
 };
+let autosaveTimer = 0;
+let lastTouchTap = { time: 0, x: 0, y: 0 };
 
 function idx(x,y){return y*state.gridW+x}
 function key(x,y){return `${x},${y}`}
@@ -264,15 +266,16 @@ function transformSelection(mode){pushHistory(mode); for(const k of state.select
 function openContext(cx,cy,c){
   const menu=document.getElementById('contextMenu'); menu.innerHTML=''; menu.classList.remove('hidden');
   menu.style.left=`${cx}px`; menu.style.top=`${cy}px`;
-  const actions=[['Dupliquer',()=>duplicateSelection()],['Supprimer',()=>deleteSelection()],['Verrouiller',()=>lockSelection()],['Changer couleur',()=>changeColorSelection()],['Ajouter aux favoris',()=>toggleFavorite(state.activeTile)]];
+  const actions=[['Dupliquer',()=>duplicateSelection()],['Supprimer',()=>deleteSelection()],['Verrouiller',()=>lockSelection()],['Changer calque',()=>changeLayerSelection()],['Changer couleur',()=>changeColorSelection()],['Propriétés',()=>document.getElementById('rightPanel').classList.add('open')],['Ajouter aux favoris',()=>toggleFavorite(state.activeTile)]];
   actions.forEach(([label,fn])=>{const b=document.createElement('button'); b.textContent=label; b.onclick=()=>{fn(); hideContext();}; menu.appendChild(b);});
   if(!state.selected.size && inBounds(c.x,c.y) && state.cells[idx(c.x,c.y)]!=='empty'){ state.selected=new Set([key(c.x,c.y)]); renderProps(); renderAll(); }
 }
 function hideContext(){document.getElementById('contextMenu').classList.add('hidden');}
 function duplicateSelection(){moveSelection(1,1,true)}
-function deleteSelection(){pushHistory('Delete'); for(const k of state.selected){const {x,y}=parseKey(k); erase(x,y); delete state.cellProps[k];} state.selected.clear(); renderAll(); renderProps(); saveActiveProject();}
+function deleteSelection(){if(state.selected.size>1 && !confirm(`Supprimer ${state.selected.size} éléments ?`)) return; pushHistory('Delete'); for(const k of state.selected){const {x,y}=parseKey(k); erase(x,y); delete state.cellProps[k];} state.selected.clear(); renderAll(); renderProps(); saveActiveProject(); toast('Éléments supprimés — Ctrl/Cmd+Z pour annuler');}
 function lockSelection(){for(const k of state.selected){if(state.cellProps[k]) state.cellProps[k].locked=!state.cellProps[k].locked;} saveActiveProject();}
 function changeColorSelection(){const c=prompt('Couleur hex (ex #22c55e):','#22c55e'); if(!c) return; pushHistory('Color'); for(const k of state.selected){if(state.cellProps[k]) state.cellProps[k].color=c;} renderAll(); saveActiveProject();}
+function changeLayerSelection(){const layer=prompt('Calque cible:', LAYERS[0]); if(!layer || !LAYERS.includes(layer)) return; pushHistory('Layer change'); for(const k of state.selected){if(state.cellProps[k]) state.cellProps[k].layer=layer;} renderAll(); saveActiveProject();}
 
 function alignSelection(){
   if(state.selected.size<2) return; pushHistory('Align'); const cells=[...state.selected].map(parseKey); const minX=Math.min(...cells.map(c=>c.x)), minY=Math.min(...cells.map(c=>c.y));
@@ -287,7 +290,17 @@ function replaceTypeInSelection(){if(!state.selected.size)return; const from=pro
 function repeatSelection(){if(!state.selected.size)return; const n=+prompt('Répéter N fois','3'); const dx=+prompt('Pas X','2'); const dy=+prompt('Pas Y','0'); if(!n)return; pushHistory('Repeat'); const base=[...state.selected].map(k=>({k,...parseKey(k),tile:state.cells[idx(...Object.values(parseKey(k)))],prop:state.cellProps[k]})); for(let i=1;i<=n;i++){base.forEach(b=>{const x=b.x+dx*i,y=b.y+dy*i; if(inBounds(x,y)){paint(x,y,b.tile,{ignoreLock:true}); state.cellProps[key(x,y)]={...b.prop,x,y};}});} renderAll(); saveActiveProject();}
 
 function exportJSON(){const payload={schemaVersion:SCHEMA_VERSION,appVersion:APP_VERSION,date:new Date().toISOString(),projectId:activeProjectId,layout:snapshot()}; download('layout-project.json',JSON.stringify(payload,null,2),'application/json');}
-function importJSON(file){file.text().then(t=>{try{const parsed=JSON.parse(t); if(!parsed?.layout?.cells || !parsed?.layout?.gridW) throw new Error('Schéma invalide: champs manquants'); restore(parsed.layout); toast('Import OK');}catch(err){alert('Import JSON invalide: '+err.message);}});}
+function migrateLayout(layout={}){
+  const migrated = { ...layout };
+  migrated.schemaVersion = String(migrated.schemaVersion || '1');
+  if(!migrated.layerOrder) migrated.layerOrder = [...LAYERS];
+  if(!migrated.layerStates) migrated.layerStates = Object.fromEntries(LAYERS.map(l=>[l,{visible:true,locked:false,opacity:1}]));
+  if(!migrated.cellRealSize) migrated.cellRealSize = 100;
+  if(!migrated.snapshots) migrated.snapshots = [];
+  if(migrated.schemaVersion !== SCHEMA_VERSION) migrated.schemaVersion = SCHEMA_VERSION;
+  return migrated;
+}
+function importJSON(file){file.text().then(t=>{try{const parsed=JSON.parse(t); if(!parsed?.layout?.cells || !parsed?.layout?.gridW) throw new Error('Schéma invalide: champs manquants'); restore(migrateLayout(parsed.layout)); toast('Import OK');}catch(err){alert('Import JSON invalide: '+err.message);}});}
 function exportPNG(){
   const withGrid=confirm('Inclure la grille dans le PNG ?');
   const c=document.createElement('canvas'); c.width=gridCanvas.width; c.height=gridCanvas.height; const cc=c.getContext('2d'); cc.drawImage(bpCanvas,0,0); cc.drawImage(gridCanvas,0,0);
@@ -298,8 +311,17 @@ function download(name,data,type,isDataUrl){const a=document.createElement('a');
 
 function saveRoot(data){localStorage.setItem(STORAGE_ROOT,JSON.stringify(data));}
 function loadRoot(){try{return JSON.parse(localStorage.getItem(STORAGE_ROOT)||'{"projects":{}}');}catch{return {projects:{}}}}
-function ensureProject(){const root=loadRoot(); if(!Object.keys(root.projects).length){const id='project-'+Date.now(); root.projects[id]={id,name:'Projet 1',updatedAt:Date.now(),data:snapshot()}; root.activeProjectId=id; saveRoot(root);} if(!root.activeProjectId) root.activeProjectId=Object.keys(root.projects)[0]; activeProjectId=root.activeProjectId; const p=root.projects[activeProjectId]; restore(p.data); state.projectName=p.name; renderProjects();}
-function saveActiveProject(){const root=loadRoot(); root.projects[activeProjectId]={id:activeProjectId,name:state.projectName,updatedAt:Date.now(),data:snapshot()}; root.activeProjectId=activeProjectId; saveRoot(root); updateStatus();}
+function ensureProject(){const root=loadRoot(); if(!Object.keys(root.projects).length){const id='project-'+Date.now(); root.projects[id]={id,name:'Projet 1',updatedAt:Date.now(),data:snapshot()}; root.activeProjectId=id; saveRoot(root);} if(!root.activeProjectId) root.activeProjectId=Object.keys(root.projects)[0]; activeProjectId=root.activeProjectId; const p=root.projects[activeProjectId]; restore(migrateLayout(p.data)); state.projectName=p.name; renderProjects();}
+function commitActiveProject(){const root=loadRoot(); root.projects[activeProjectId]={id:activeProjectId,name:state.projectName,updatedAt:Date.now(),data:snapshot()}; root.activeProjectId=activeProjectId; saveRoot(root); updateStatus();}
+function saveActiveProject(immediate=false){
+  if(immediate){
+    clearTimeout(autosaveTimer);
+    commitActiveProject();
+    return;
+  }
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(()=>commitActiveProject(), 450);
+}
 function renderProjects(){const root=loadRoot(); const sel=document.getElementById('projectSelect'); sel.innerHTML=Object.values(root.projects).map(p=>`<option value="${p.id}" ${p.id===activeProjectId?'selected':''}>${p.name}</option>`).join('');}
 function createSnapshot(){const note=prompt('Note version:',''); state.snapshots.unshift({id:Date.now(),note,date:new Date().toISOString(),data:snapshot()}); state.snapshots=state.snapshots.slice(0,30); renderSnapshots(); saveActiveProject();}
 function renderSnapshots(){const box=document.getElementById('snapshotsBox'); box.innerHTML=(state.snapshots||[]).map((s,i)=>`<div class="history-item"><strong>${i+1}</strong> ${new Date(s.date).toLocaleString()}<br>${s.note||''}<br><button data-restore="${s.id}">Restaurer</button></div>`).join('')||'Aucune version'; box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const s=state.snapshots.find(x=>String(x.id)===b.dataset.restore); if(s&&confirm('Restaurer cette version ?')) restore(s.data);});}
@@ -329,10 +351,26 @@ function bindUI(){
   redoBtn.onclick=()=>{if(!state.future.length)return; state.history.push(JSON.stringify(snapshot())); restore(JSON.parse(state.future.pop()));};
   resizeGridBtn.onclick=()=>{if(!confirm('Redimensionner la grille et réinitialiser le contenu ?')) return; pushHistory('Resize grid'); state.gridW=+gridW.value; state.gridH=+gridH.value; state.cellSize=+cellSize.value; state.cellRealSize=+cellRealSize.value; initCells(); state.selected.clear(); renderAll(); saveActiveProject();};
   exportJsonBtn.onclick=exportJSON; importJsonBtn.onclick=()=>importJsonInput.click(); importJsonInput.onchange=e=>{const f=e.target.files[0]; if(f) importJSON(f)};
-  saveBtn.onclick=()=>{saveActiveProject(); toast('Sauvegardé');};
+  saveBtn.onclick=()=>{saveActiveProject(true); toast('Sauvegardé');};
   exportPngBtn.onclick=exportPNG;
   document.getElementById('measureBtn').onclick=()=>{state.measureMode=!state.measureMode; state.measurePoints=[]; toast('Mesure '+(state.measureMode?'ON':'OFF'));};
   document.getElementById('multiBtn').onclick=()=>{state.multiMode=!state.multiMode; toast('Multi '+(state.multiMode?'ON':'OFF'));};
+
+  recenterBtn.onclick=()=>{state.panX=50; state.panY=50; renderAll(); saveActiveProject(); toast('Vue recentrée');};
+  fitBtn.onclick=()=>{
+    let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+    for(let y=0;y<state.gridH;y++) for(let x=0;x<state.gridW;x++) if(state.cells[idx(x,y)]!=='empty'){ minX=Math.min(minX,x); minY=Math.min(minY,y); maxX=Math.max(maxX,x); maxY=Math.max(maxY,y); }
+    if(!Number.isFinite(minX)){ toast('Aucun contenu à ajuster'); return; }
+    const boundsW=Math.max(1,maxX-minX+1), boundsH=Math.max(1,maxY-minY+1);
+    const pad=2;
+    const zx=wrap.clientWidth/((boundsW+pad)*state.cellSize);
+    const zy=wrap.clientHeight/((boundsH+pad)*state.cellSize);
+    state.zoom=Math.max(.35,Math.min(3.2,Math.min(zx,zy)));
+    const cs=state.cellSize*state.zoom;
+    state.panX=(wrap.clientWidth-boundsW*cs)/2-minX*cs;
+    state.panY=(wrap.clientHeight-boundsH*cs)/2-minY*cs;
+    renderAll(); saveActiveProject(); toast('Vue ajustée');
+  };
   document.getElementById('toggleLeftDrawer').onclick=()=>leftPanel.classList.toggle('open');
   document.getElementById('toggleRightDrawer').onclick=()=>rightPanel.classList.toggle('open');
 
@@ -359,7 +397,7 @@ function bindUI(){
   historyBtn.onclick=()=>{const text=state.historyLog.map((h,i)=>`${i+1}. ${h.time} - ${h.label}`).join('\n'); alert(text||'Historique vide');};
   createSnapshotBtn.onclick=createSnapshot;
 
-  projectSelect.onchange=e=>{const root=loadRoot(); activeProjectId=e.target.value; const p=root.projects[activeProjectId]; state.projectName=p.name; restore(p.data);};
+  projectSelect.onchange=e=>{const root=loadRoot(); activeProjectId=e.target.value; const p=root.projects[activeProjectId]; state.projectName=p.name; restore(migrateLayout(p.data));};
   newProjectBtn.onclick=()=>{const name=prompt('Nom projet','Nouveau projet'); if(!name)return; const root=loadRoot(); const id='project-'+Date.now(); root.projects[id]={id,name,updatedAt:Date.now(),data:snapshot()}; root.activeProjectId=id; saveRoot(root); activeProjectId=id; state.projectName=name; initCells(); saveActiveProject(); renderProjects(); renderAll();};
   renameProjectBtn.onclick=()=>{const name=prompt('Nouveau nom',state.projectName); if(!name)return; state.projectName=name; saveActiveProject(); renderProjects();};
   duplicateProjectBtn.onclick=()=>{const root=loadRoot(); const id='project-'+Date.now(); root.projects[id]={id,name:state.projectName+' (copie)',updatedAt:Date.now(),data:snapshot()}; saveRoot(root); renderProjects();};
@@ -384,7 +422,7 @@ function bindUI(){
     if(cmd&&k==='c'){e.preventDefault(); copySelection();}
     if(cmd&&k==='v'){e.preventDefault(); pasteSelection();}
     if(cmd&&k==='d'){e.preventDefault(); duplicateSelection();}
-    if(cmd&&k==='s'){e.preventDefault(); saveActiveProject(); toast('Sauvegardé');}
+    if(cmd&&k==='s'){e.preventDefault(); saveActiveProject(true); toast('Sauvegardé');}
     if(['Delete','Backspace'].includes(e.key)){e.preventDefault(); deleteSelection();}
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault(); const step=e.shiftKey?5:1; const map={ArrowUp:[0,-step],ArrowDown:[0,step],ArrowLeft:[-step,0],ArrowRight:[step,0]}; moveSelection(...map[e.key]);}
   });
@@ -398,7 +436,27 @@ function bindUI(){
       touches=[...e.touches];
     }else if(e.touches.length===1){const t=e.touches[0]; pointerMove({clientX:t.clientX,clientY:t.clientY,movementX:0,movementY:0,altKey:false});}
   }, {passive:false});
-  wrap.addEventListener('touchend',e=>{if(!e.touches.length) pointerUp({clientX:state.pointerStart?.px||0,clientY:state.pointerStart?.py||0}); touches=[...e.touches];});
+  wrap.addEventListener('touchend',e=>{
+    if(!e.touches.length){
+      const x=state.pointerStart?.px||0, y=state.pointerStart?.py||0;
+      pointerUp({clientX:x,clientY:y});
+      const now=Date.now();
+      const isDoubleTap = now-lastTouchTap.time<280 && Math.hypot(x-lastTouchTap.x,y-lastTouchTap.y)<24;
+      if(isDoubleTap && state.selected.size){
+        const xs=[...state.selected].map(k=>parseKey(k).x);
+        const ys=[...state.selected].map(k=>parseKey(k).y);
+        const center={x:(Math.min(...xs)+Math.max(...xs))/2,y:(Math.min(...ys)+Math.max(...ys))/2};
+        state.zoom=Math.max(.35,Math.min(3.2,state.zoom*1.3));
+        const cs=state.cellSize*state.zoom;
+        state.panX=wrap.clientWidth/2-center.x*cs;
+        state.panY=wrap.clientHeight/2-center.y*cs;
+        renderAll();
+        toast('Zoom sur sélection');
+      }
+      lastTouchTap={time:now,x,y};
+    }
+    touches=[...e.touches];
+  });
 
   precisionPad.querySelectorAll('button').forEach(b=>b.onclick=()=>moveSelection(+b.dataset.dx,+b.dataset.dy));
   floatingActions.querySelector('[data-action="duplicate"]').onclick=duplicateSelection;
@@ -426,5 +484,5 @@ bindUI();
 if(!localStorage.getItem(STORAGE_ROOT)){demo();}
 ensureProject();
 renderTools(); renderPalette(); renderLayers(); renderAll(); renderProps(); buildWarnings(); updateStatus();
-setInterval(()=>saveActiveProject(), 10000);
+setInterval(()=>saveActiveProject(true), 10000);
 })();

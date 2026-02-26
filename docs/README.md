@@ -4,7 +4,7 @@ Application web offline-first (sans backend) pour éditer un plan d'entrepôt en
 
 ## Lancer
 1. Ouvrir `index.html` dans un navigateur moderne (Safari iPhone ou desktop).
-2. L'application sauvegarde automatiquement les projets en `localStorage`.
+2. L'application sauvegarde automatiquement les projets en `localStorage` (autosave debounced pour limiter les écritures).
 3. Utiliser Export/Import JSON pour backup externe.
 
 ## Outils
@@ -21,14 +21,16 @@ Application web offline-first (sans backend) pour éditer un plan d'entrepôt en
 - `Ctrl/Cmd + V` coller intelligent (offset).
 - `Ctrl/Cmd + D` dupliquer.
 - `Delete` / `Backspace` supprimer sélection.
-- `Ctrl/Cmd + S` sauvegarde locale.
+- `Ctrl/Cmd + S` sauvegarde locale immédiate.
 - `Space` maintenu = pan temporaire.
 - `Alt` pendant drag sélection = duplication en glissant.
 - Flèches = déplacement précision (Shift+flèche = pas de 5 cellules).
+- Boutons `Recentrer` + `Fit` pour recadrer rapidement la vue.
 
 ## Gestes iPhone
 - Tap: action outil actif.
 - Long-press: tooltip + menu contextuel.
+- Double-tap sur sélection: zoom centré rapide.
 - Pinch: zoom.
 - 2 doigts: pan.
 - Bouton `Multi`: active la multi-sélection tactile.
@@ -65,6 +67,7 @@ Le JSON exporté contient:
 
 Validation import:
 - JSON invalide ou schéma incomplet => message clair, pas de crash.
+- Migration de schéma basique appliquée automatiquement (normalisation des champs manquants).
 
 ## Export PNG
 - Export PNG de la vue actuelle du layout (grille + blueprint + contenu).
