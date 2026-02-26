@@ -17,10 +17,11 @@
       <button id="recenterBtn" title="Recentrer la vue">Recentrer</button>
       <button id="fitBtn" title="Ajuster au contenu">Fit</button>
       <button id="undoBtn" title="Undo (Ctrl/Cmd+Z)">Undo</button><button id="redoBtn" title="Redo (Ctrl/Cmd+Y)">Redo</button>
-      <button id="exportJsonBtn" title="Exporter JSON">Export JSON</button><button id="importJsonBtn" title="Importer JSON">Import JSON</button>
+      <button id="exportJsonBtn" title="Exporter JSON">Export JSON</button><button id="importJsonBtn" title="Importer JSON">Import JSON</button><button id="mergeJsonBtn" title="Importer en fusion">Merge JSON</button><button id="exportCsvBtn" title="Exporter bins CSV">Export CSV</button><button id="exportPdfBtn" title="Rapport PDF">Export PDF</button>
       <button id="saveBtn" title="Sauvegarder local (Ctrl/Cmd+S)">Save</button>
       <button id="exportPngBtn" title="Exporter PNG">Export PNG</button><button id="toggle3dBtn" title="Vue 3D">3D</button><input type="file" id="importJsonInput" accept="application/json" hidden />
     </div>
+    <button id="toggleIphoneModeBtn" class="drawer-toggle" aria-label="Mode iPhone">📱 iPhone</button>
     <button id="toggleRightDrawer" class="drawer-toggle" aria-label="Ouvrir panneau projet">⚙ Projet</button>
   </header>
 
@@ -116,6 +117,22 @@
       <h3>Versions</h3>
       <button id="createSnapshotBtn">Créer version</button>
       <div id="snapshotsBox"></div>
+
+      
+      <h3>Règles & Données</h3>
+      <label>Langue <select id="langToggle"><option value="fr">FR</option><option value="en">EN</option></select></label>
+      <label>Profil actif <select id="profileSelect"></select></label>
+      <div class="row"><button id="newProfileBtn">Nouveau profil</button><button id="projectStatusBtn">Statut projet</button></div>
+      <label><input id="auditMode" type="checkbox" checked /> Mode audit</label>
+      <label><input id="ruleAisleWidth" type="checkbox" checked /> Règle allée min 2 cases</label>
+      <label><input id="ruleExitClear" type="checkbox" checked /> Règle issues dégagées</label>
+      <label><input id="ruleUnknownBin" type="checkbox" checked /> Règle bins connus</label>
+      <div class="row"><button id="runAuditBtn">Lancer audit</button><button id="repairProjectBtn">Réparer projet</button></div>
+      <div class="row"><button id="reviewModeBtn">Mode review</button><button id="compareSnapshotBtn">Comparer versions</button></div>
+      <label><input id="autoHidePanels" type="checkbox" /> Auto-hide panneaux (iPhone)</label>
+      <label><input id="focusMode" type="checkbox" /> Focus mode canvas</label>
+      <label><input id="perfMode" type="checkbox" /> Mode performance</label>
+      <label><input id="fpsDebug" type="checkbox" /> FPS debug</label>
 
       <h3>Warnings</h3>
       <ul id="warnings"></ul>

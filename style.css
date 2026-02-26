@@ -54,3 +54,11 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .view3d-legend{position:absolute;right:.6rem;bottom:.6rem;background:#111827d9;border:1px solid var(--border);padding:.35rem .5rem;border-radius:8px;font-size:.72rem;display:grid;gap:.2rem}
 .view3d-legend span{display:flex;align-items:center;gap:.35rem}
 .view3d-legend i{width:10px;height:10px;display:inline-block;border-radius:2px}
+
+body.focus-mode .panel, body.focus-mode .topbar{opacity:.08;transition:opacity .2s}
+body.focus-mode .editor{grid-column:1/-1}
+body.iphone-mode .quickbar{display:flex}
+body.iphone-mode .panel.left, body.iphone-mode .panel.right{position:fixed;bottom:0;max-height:58vh;z-index:15}
+body.perf-mode *{box-shadow:none!important;text-shadow:none!important;transition:none!important}
+.fps-debug{position:absolute;right:.5rem;top:.5rem;background:#000c;color:#86efac;padding:.2rem .35rem;border-radius:6px;font-size:.7rem;z-index:6}
+.diff-highlight{outline:2px dashed #f43f5e;outline-offset:-2px}

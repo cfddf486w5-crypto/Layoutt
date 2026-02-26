@@ -39,7 +39,12 @@ const state = {
   snap:{grid:true,objects:true,centers:true,guides:true},
   guides:[],
   viewMode:'2d', view3d:null, view3dSelected:null,
-  view3dSettings:{wallHeight:2.6,wallThickness:0.2,quality:'high',showBlueprint:true,walkMode:false}
+  view3dSettings:{wallHeight:2.6,wallThickness:0.2,quality:'high',showBlueprint:true,walkMode:false},
+  tagsCatalog:[{name:'safety',category:'ops',color:'#ef4444'},{name:'cold',category:'zone',color:'#38bdf8'}],
+  rules:{auditMode:true,aisleMinWidth:true,exitClear:true,knownBins:true},
+  profiles:[{id:'default',name:'Opérateur',author:'Equipe',createdAt:new Date().toISOString()}],
+  activeProfileId:'default', projectStatus:'draft', language:'fr', reviewMode:false,
+  comments:[], errorLogs:[], diffCells:[], autoHidePanels:false, iphoneMode:false, perfMode:false, fpsDebug:false
 };
 let autosaveTimer = 0;
 let lastTouchTap = { time: 0, x: 0, y: 0 };
@@ -47,9 +52,14 @@ let lastTouchTap = { time: 0, x: 0, y: 0 };
 function idx(x,y){return y*state.gridW+x}
 function key(x,y){return `${x},${y}`}
 function parseKey(k){const [x,y]=k.split(',').map(Number); return {x,y};}
+function logError(message,context=''){state.errorLogs.unshift({date:new Date().toISOString(),message,context}); state.errorLogs=state.errorLogs.slice(0,200);}
+function customTemplateFor(tileId){if(tileId.includes('rack')) return {capacity:0,levels:0}; if(tileId.startsWith('zone_')) return {zone:'',aisle:''}; return {};}
+function normalizeProp(p,x,y,tile){const base={...defaultCellProps(tile,x,y),...(p||{})}; base.tags=Array.isArray(base.tags)?base.tags:[]; base.tagDetails=Array.isArray(base.tagDetails)?base.tagDetails:base.tags.map(n=>({name:n,category:'custom',color:'#94a3b8'})); base.customFields=base.customFields&&typeof base.customFields==='object'?base.customFields:{}; base.binPriority=base.binPriority||''; return base;}
+function repairProjectData(layout){if(!layout||!Array.isArray(layout.cells)) return false; for(let y=0;y<(layout.gridH||0);y++) for(let x=0;x<(layout.gridW||0);x++){const k=key(x,y); const tile=layout.cells[y*(layout.gridW||0)+x]||'empty'; if(tile==='empty') continue; layout.cellProps[k]=normalizeProp(layout.cellProps?.[k],x,y,tile);} return true;}
+function listBinRows(){const rows=[]; for(let y=0;y<state.gridH;y++)for(let x=0;x<state.gridW;x++){const tile=state.cells[idx(x,y)]; if(tile==='empty') continue; const p=state.cellProps[key(x,y)]||defaultCellProps(tile,x,y); const isBin=tile.startsWith('bin_')||tile.includes('rack'); if(!isBin) continue; const zoneNeighbor=[[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy])=>inBounds(x+dx,y+dy)?state.cells[idx(x+dx,y+dy)]:'').find(v=>v?.startsWith('zone_'))||''; rows.push({bin:p.name||`${tile}-${x}-${y}`,type:tile,zone:(p.customFields?.zone||zoneNeighbor||'').replace('zone_',''),aisle:p.customFields?.aisle||'',position:`${x},${y}`,tags:(p.tags||[]).join('|')});} return rows;}
 function initCells(){state.cells=Array(state.gridW*state.gridH).fill('empty'); state.cellProps={}}
 function inBounds(x,y){return x>=0&&y>=0&&x<state.gridW&&y<state.gridH;}
-function defaultCellProps(tileId,x,y){const t=tileById[tileId]||tileById.empty||{layer:'STRUCTURE'}; return {id:crypto.randomUUID?.()||String(Math.random()),x,y,w:1,h:1,tileId,layer:t.layer,rotation:0,mirrorH:false,mirrorV:false,color:'',opacity:1,tags:[],note:'',name:t.label||tileId,locked:false};}
+function defaultCellProps(tileId,x,y){const t=tileById[tileId]||tileById.empty||{layer:'STRUCTURE'}; return {id:crypto.randomUUID?.()||String(Math.random()),x,y,w:1,h:1,tileId,layer:t.layer,rotation:0,mirrorH:false,mirrorV:false,color:'',opacity:1,tags:[],tagDetails:[],note:'',name:t.label||tileId,locked:false,binPriority:'',customFields:customTemplateFor(tileId),author:'',updatedAt:new Date().toISOString()};}
 
 function pushHistory(label='Action'){
   state.history.push(JSON.stringify(snapshot()));
@@ -65,7 +75,9 @@ function snapshot(){
     cells:state.cells,cellProps:state.cellProps,layerStates:state.layerStates,layerOrder:state.layerOrder,layerFilter:state.layerFilter,
     favorites:state.favorites,recentTiles:state.recentTiles,
     blueprint:{...state.blueprint,img:null}, panX:state.panX,panY:state.panY,zoom:state.zoom,
-    snapshots:state.snapshots
+    snapshots:state.snapshots, tagsCatalog:state.tagsCatalog, rules:state.rules, profiles:state.profiles,
+    activeProfileId:state.activeProfileId, projectStatus:state.projectStatus, language:state.language,
+    comments:state.comments, errorLogs:state.errorLogs
   }
 }
 function restore(s){
@@ -126,6 +138,7 @@ function renderAll(){
   for(let y=0;y<=state.gridH;y++){const sy=state.panY+y*cs; ctx.beginPath();ctx.moveTo(state.panX,sy);ctx.lineTo(state.panX+state.gridW*cs,sy);ctx.stroke()}
 
   for(const k of state.selected){const {x,y}=parseKey(k); const p=cellToScreen(x,y); ctx.strokeStyle='#22d3ee'; ctx.lineWidth=2; ctx.strokeRect(p.x+1,p.y+1,cs-2,cs-2)}
+  (state.diffCells||[]).slice(0,800).forEach(i=>{const x=i%state.gridW,y=Math.floor(i/state.gridW); const p=cellToScreen(x,y); ctx.strokeStyle='rgba(244,63,94,.9)'; ctx.strokeRect(p.x+2,p.y+2,cs-4,cs-4);});
   if(state.marquee){ const {x1,y1,x2,y2}=state.marquee; const minX=Math.min(x1,x2), minY=Math.min(y1,y2), maxX=Math.max(x1,x2), maxY=Math.max(y1,y2); const p1=cellToScreen(minX,minY), p2=cellToScreen(maxX+1,maxY+1); ctx.fillStyle='rgba(34,211,238,.12)'; ctx.fillRect(p1.x,p1.y,p2.x-p1.x,p2.y-p1.y); ctx.strokeStyle='rgba(34,211,238,.8)'; ctx.strokeRect(p1.x,p1.y,p2.x-p1.x,p2.y-p1.y);}
   if(state.measurePoints.length===2){const [a,b]=state.measurePoints; const pa=cellToScreen(a.x+.5,a.y+.5), pb=cellToScreen(b.x+.5,b.y+.5); ctx.strokeStyle='#facc15'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(pb.x,pb.y); ctx.stroke();}
   renderMiniMap();
@@ -249,12 +262,18 @@ function renderProps(){
   <label>X,Y <input id="propPos" value="${first?.x??''},${first?.y??''}"/></label>
   <label>Couleur <input id="propColor" value="${first?.color||''}" placeholder="#rrggbb"/></label>
   <label>Opacité <input id="propOpacity" type="range" min="0.1" max="1" step="0.05" value="${first?.opacity??1}"/></label>
-  <label>Tags <input id="propTags" value="${(first?.tags||[]).join(',')}"/></label>
+  <label>Tags (noms) <input id="propTags" value="${(first?.tags||[]).join(',')}"/></label>
+  <label>Tags avancés name:category:color <input id="propTagDetails" value="${(first?.tagDetails||[]).map(t=>`${t.name}:${t.category}:${t.color}`).join(',')}"/></label>
+  <label>Priorité bin <select id="propBinPriority"><option value="">-</option>${['P1','P2','P3','P4','P5','P6','P7'].map(v=>`<option ${first?.binPriority===v?'selected':''}>${v}</option>`).join('')}</select></label>
+  <label>Capacity (rack) <input id="propCapacity" type="number" value="${first?.customFields?.capacity||0}"/></label>
+  <label>Levels (rack) <input id="propLevels" type="number" value="${first?.customFields?.levels||0}"/></label>
+  <label>Zone <input id="propZone" value="${first?.customFields?.zone||''}"/></label>
+  <label>Aisle <input id="propAisle" value="${first?.customFields?.aisle||''}"/></label>
   <label>Note <input id="propNote" value="${first?.note||''}"/></label>
   <div class="row"><button id="rotateBtn">Rotate 90°</button><button id="mirrorHBtn">Mirror H</button><button id="mirrorVBtn">Mirror V</button></div>
   <button id="addFavFromProps">Ajouter aux favoris</button>`;
-  const applyMass=()=>{pushHistory('Edit props'); for(const k of state.selected){const p=state.cellProps[k]; if(!p) continue; p.name=propName.value; p.tileId=propType.value; p.layer=propLayer.value; p.color=propColor.value.trim(); p.opacity=+propOpacity.value; p.tags=propTags.value.split(',').map(s=>s.trim()).filter(Boolean); p.note=propNote.value;} renderAll(); saveActiveProject();};
-  ['propName','propType','propLayer','propColor','propOpacity','propTags','propNote'].forEach(id=>box.querySelector('#'+id).onchange=applyMass);
+  const applyMass=()=>{pushHistory('Edit props'); for(const k of state.selected){const p=state.cellProps[k]; if(!p) continue; p.name=propName.value; p.tileId=propType.value; p.layer=propLayer.value; p.color=propColor.value.trim(); p.opacity=+propOpacity.value; p.tags=propTags.value.split(',').map(s=>s.trim()).filter(Boolean); p.tagDetails=propTagDetails.value.split(',').map(s=>s.trim()).filter(Boolean).map(v=>{const [name,category,color]=v.split(':'); return {name,category:category||'custom',color:color||'#94a3b8'};}); p.binPriority=propBinPriority.value; p.customFields={...(p.customFields||{}),capacity:+propCapacity.value||0,levels:+propLevels.value||0,zone:propZone.value.trim(),aisle:propAisle.value.trim()}; p.note=propNote.value; p.author=state.profiles.find(x=>x.id===state.activeProfileId)?.name||''; p.updatedAt=new Date().toISOString();} renderAll(); saveActiveProject();};
+  ['propName','propType','propLayer','propColor','propOpacity','propTags','propTagDetails','propBinPriority','propCapacity','propLevels','propZone','propAisle','propNote'].forEach(id=>box.querySelector('#'+id).onchange=applyMass);
   box.querySelector('#rotateBtn').onclick=()=>transformSelection('rotate');
   box.querySelector('#mirrorHBtn').onclick=()=>transformSelection('mirrorH');
   box.querySelector('#mirrorVBtn').onclick=()=>transformSelection('mirrorV');
@@ -297,16 +316,30 @@ function migrateLayout(layout={}){
   if(!migrated.layerStates) migrated.layerStates = Object.fromEntries(LAYERS.map(l=>[l,{visible:true,locked:false,opacity:1}]));
   if(!migrated.cellRealSize) migrated.cellRealSize = 100;
   if(!migrated.snapshots) migrated.snapshots = [];
+  if(!migrated.tagsCatalog) migrated.tagsCatalog = [{name:'default',category:'custom',color:'#94a3b8'}];
+  if(!migrated.rules) migrated.rules = {auditMode:true,aisleMinWidth:true,exitClear:true,knownBins:true};
+  if(!migrated.profiles) migrated.profiles = [{id:'default',name:'Opérateur',author:'Equipe',createdAt:new Date().toISOString()}];
+  if(!migrated.activeProfileId) migrated.activeProfileId = migrated.profiles[0]?.id || 'default';
+  if(!migrated.projectStatus) migrated.projectStatus = 'draft';
+  if(!migrated.language) migrated.language = 'fr';
+  migrated.comments = Array.isArray(migrated.comments) ? migrated.comments : [];
+  migrated.errorLogs = Array.isArray(migrated.errorLogs) ? migrated.errorLogs : [];
+  repairProjectData(migrated);
+  if(migrated.schemaVersion === '1') migrated.schemaVersion = '2';
   if(migrated.schemaVersion !== SCHEMA_VERSION) migrated.schemaVersion = SCHEMA_VERSION;
   return migrated;
 }
-function importJSON(file){file.text().then(t=>{try{const parsed=JSON.parse(t); if(!parsed?.layout?.cells || !parsed?.layout?.gridW) throw new Error('Schéma invalide: champs manquants'); restore(migrateLayout(parsed.layout)); toast('Import OK');}catch(err){alert('Import JSON invalide: '+err.message);}});}
+function importJSON(file, mode='replace'){file.text().then(t=>{try{const parsed=JSON.parse(t); const sv=String(parsed?.schemaVersion||parsed?.layout?.schemaVersion||''); if(sv && sv!==SCHEMA_VERSION && sv!=='1') throw new Error('schemaVersion non supportée'); if(!parsed?.layout?.cells || !parsed?.layout?.gridW) throw new Error('Schéma invalide: champs manquants'); const incoming=migrateLayout(parsed.layout); if(mode==='merge'){pushHistory('Merge import'); for(let y=0;y<Math.min(state.gridH,incoming.gridH);y++)for(let x=0;x<Math.min(state.gridW,incoming.gridW);x++){const tile=incoming.cells[y*incoming.gridW+x]; if(tile&&tile!=='empty'){paint(x,y,tile,{ignoreLock:true}); state.cellProps[key(x,y)]=normalizeProp(incoming.cellProps?.[key(x,y)],x,y,tile);}} renderAll();} else restore(incoming); toast('Import OK');}catch(err){logError(err.message,'importJSON'); alert('Import JSON invalide: '+err.message);}});}
 function exportPNG(){
   const withGrid=confirm('Inclure la grille dans le PNG ?');
   const c=document.createElement('canvas'); c.width=gridCanvas.width; c.height=gridCanvas.height; const cc=c.getContext('2d'); cc.drawImage(bpCanvas,0,0); cc.drawImage(gridCanvas,0,0);
+  if(state.projectStatus!=='approved'){cc.save(); cc.globalAlpha=0.18; cc.fillStyle='#ffffff'; cc.font='700 48px sans-serif'; cc.translate(c.width*0.15,c.height*0.5); cc.rotate(-0.3); cc.fillText(state.projectStatus.toUpperCase(),0,0); cc.restore();}
   if(!withGrid){ /* naive hide grid by redraw cells only */ }
   download('layout.png',c.toDataURL('image/png'),'image/png',true);
 }
+function exportBinsCSV(){const rows=listBinRows(); const header='bin,type,zone,aisle,position,tags'; const csv=[header,...rows.map(r=>[r.bin,r.type,r.zone,r.aisle,r.position,r.tags].map(v=>`"${String(v).replaceAll('"','""')}"`).join(','))].join('\n'); download('bins.csv',csv,'text/csv'); toast(`CSV bins: ${rows.length}`);}
+function runAuditChecks(){const out=[]; if(state.rules.knownBins){for(let y=0;y<state.gridH;y++)for(let x=0;x<state.gridW;x++){if(state.cells[idx(x,y)]==='bin_unknown_type') out.push(`Bin inconnu en ${x},${y}`);}} if(state.rules.exitClear){for(let y=0;y<state.gridH;y++)for(let x=0;x<state.gridW;x++){const t=state.cells[idx(x,y)]; if(t==='marker_exit'){const blocked=[[1,0],[-1,0],[0,1],[0,-1]].every(([dx,dy])=>!inBounds(x+dx,y+dy)||state.cells[idx(x+dx,y+dy)].includes('wall')); if(blocked) out.push(`Issue bloquée en ${x},${y}`);}}} if(state.rules.aisleMinWidth){for(let y=0;y<state.gridH;y++)for(let x=0;x<state.gridW;x++){if(state.cells[idx(x,y)]==='aisle_walkway'){const sideA=inBounds(x-1,y)&&state.cells[idx(x-1,y)]==='aisle_walkway'; const sideB=inBounds(x+1,y)&&state.cells[idx(x+1,y)]==='aisle_walkway'; if(!sideA&&!sideB) out.push(`Allée étroite en ${x},${y}`);}}} return out;}
+function exportAuditPDF(){const rows=listBinRows(); const issues=runAuditChecks(); const w=window.open('','_blank'); if(!w) return; w.document.write(`<html><body><h1>DL Layout Report</h1><h2>Légende</h2><p>Status: ${state.projectStatus}</p><h2>Zones/Racks</h2><p>${rows.length} bins</p><h2>Safety</h2><ul>${issues.map(i=>`<li>${i}</li>`).join('')}</ul></body></html>`); w.document.close(); w.print();}
 function download(name,data,type,isDataUrl){const a=document.createElement('a'); a.download=name; a.href=isDataUrl?data:URL.createObjectURL(new Blob([data],{type})); a.click();}
 
 function saveRoot(data){localStorage.setItem(STORAGE_ROOT,JSON.stringify(data));}
@@ -327,7 +360,9 @@ function createSnapshot(){const note=prompt('Note version:',''); state.snapshots
 function renderSnapshots(){const box=document.getElementById('snapshotsBox'); box.innerHTML=(state.snapshots||[]).map((s,i)=>`<div class="history-item"><strong>${i+1}</strong> ${new Date(s.date).toLocaleString()}<br>${s.note||''}<br><button data-restore="${s.id}">Restaurer</button></div>`).join('')||'Aucune version'; box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const s=state.snapshots.find(x=>String(x.id)===b.dataset.restore); if(s&&confirm('Restaurer cette version ?')) restore(s.data);});}
 
 function buildWarnings(){
-  const out=[]; for(let y=0;y<state.gridH;y++) for(let x=0;x<state.gridW;x++){const t=state.cells[idx(x,y)]; if(t.startsWith('door_')){const ns=[[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy])=>inBounds(x+dx,y+dy)).map(([dx,dy])=>state.cells[idx(x+dx,y+dy)]); if(!ns.some(n=>n.includes('wall'))) out.push(`Porte isolée en ${x},${y}`);} if(t==='bin_unknown_type') out.push(`Bin inconnu en ${x},${y}`);} document.getElementById('warnings').innerHTML=out.slice(0,60).map(i=>`<li>${i}</li>`).join('') || '<li>Aucun warning</li>';
+  const out=[]; for(let y=0;y<state.gridH;y++) for(let x=0;x<state.gridW;x++){const t=state.cells[idx(x,y)]; if(t.startsWith('door_')){const ns=[[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy])=>inBounds(x+dx,y+dy)).map(([dx,dy])=>state.cells[idx(x+dx,y+dy)]); if(!ns.some(n=>n.includes('wall'))) out.push(`Porte isolée en ${x},${y}`);} }
+  if(state.rules.auditMode) out.push(...runAuditChecks());
+  document.getElementById('warnings').innerHTML=out.slice(0,100).map(i=>`<li>${i}</li>`).join('') || '<li>Aucun warning</li>';
 }
 
 function bindStateToInputs(){
@@ -336,7 +371,7 @@ function bindStateToInputs(){
 }
 function updateStatus(){
   const hc=state.hoverCell; const dim=state.selected.size?`Sel:${state.selected.size}`:'Sel:0';
-  statusBar.textContent=`Tool:${state.activeTool} | Zoom:${state.zoom.toFixed(2)} | Snap:${state.snap.grid?'on':'off'} | ${hc?`x:${hc.x} y:${hc.y}`:'x:- y:-'} | ${dim}`;
+  statusBar.textContent=`Tool:${state.activeTool} | Zoom:${state.zoom.toFixed(2)} | Snap:${state.snap.grid?'on':'off'} | ${hc?`x:${hc.x} y:${hc.y}`:'x:- y:-'} | ${dim} | ${state.projectStatus}`;
 }
 function toast(t){const el=document.getElementById('toast'); el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',1300)}
 function vibrate(ms=8){if(navigator.vibrate) navigator.vibrate(ms)}
@@ -350,7 +385,8 @@ function bindUI(){
   undoBtn.onclick=()=>{if(!state.history.length)return; state.future.push(JSON.stringify(snapshot())); restore(JSON.parse(state.history.pop()));};
   redoBtn.onclick=()=>{if(!state.future.length)return; state.history.push(JSON.stringify(snapshot())); restore(JSON.parse(state.future.pop()));};
   resizeGridBtn.onclick=()=>{if(!confirm('Redimensionner la grille et réinitialiser le contenu ?')) return; pushHistory('Resize grid'); state.gridW=+gridW.value; state.gridH=+gridH.value; state.cellSize=+cellSize.value; state.cellRealSize=+cellRealSize.value; initCells(); state.selected.clear(); renderAll(); saveActiveProject();};
-  exportJsonBtn.onclick=exportJSON; importJsonBtn.onclick=()=>importJsonInput.click(); importJsonInput.onchange=e=>{const f=e.target.files[0]; if(f) importJSON(f)};
+  exportJsonBtn.onclick=exportJSON; importJsonBtn.onclick=()=>{importJsonInput.dataset.mode='replace'; importJsonInput.click();}; mergeJsonBtn.onclick=()=>{importJsonInput.dataset.mode='merge'; importJsonInput.click();}; importJsonInput.onchange=e=>{const f=e.target.files[0]; if(f) importJSON(f, importJsonInput.dataset.mode || 'replace')};
+  exportCsvBtn.onclick=exportBinsCSV; exportPdfBtn.onclick=exportAuditPDF;
   saveBtn.onclick=()=>{saveActiveProject(true); toast('Sauvegardé');};
   exportPngBtn.onclick=exportPNG;
   document.getElementById('measureBtn').onclick=()=>{state.measureMode=!state.measureMode; state.measurePoints=[]; toast('Mesure '+(state.measureMode?'ON':'OFF'));};
@@ -373,6 +409,7 @@ function bindUI(){
   };
   document.getElementById('toggleLeftDrawer').onclick=()=>leftPanel.classList.toggle('open');
   document.getElementById('toggleRightDrawer').onclick=()=>rightPanel.classList.toggle('open');
+  toggleIphoneModeBtn.onclick=()=>{state.iphoneMode=!state.iphoneMode; document.body.classList.toggle('iphone-mode',state.iphoneMode);};
 
   document.getElementById('snapGrid').onchange=e=>state.snap.grid=e.target.checked;
   document.getElementById('snapObjects').onchange=e=>state.snap.objects=e.target.checked;
@@ -411,6 +448,24 @@ function bindUI(){
   walkModeBtn.onclick=e=>{state.view3dSettings.walkMode=!state.view3dSettings.walkMode; e.target.textContent='Walk: '+(state.view3dSettings.walkMode?'ON':'OFF'); refresh3DIfOpen();};
   reset3dBtn.onclick=()=>state.view3d?.resetView(); focus3dBtn.onclick=()=>state.view3d?.focusSelection();
 
+  langToggle.value=state.language; langToggle.onchange=e=>{state.language=e.target.value; saveActiveProject();};
+  profileSelect.innerHTML=state.profiles.map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); profileSelect.value=state.activeProfileId;
+  profileSelect.onchange=e=>{state.activeProfileId=e.target.value; saveActiveProject();};
+  newProfileBtn.onclick=()=>{const n=prompt('Nom profil','Reviewer'); if(!n) return; const id='pf-'+Date.now(); state.profiles.push({id,name:n,author:n,createdAt:new Date().toISOString()}); state.activeProfileId=id; profileSelect.innerHTML=state.profiles.map(p=>`<option value="${p.id}">${p.name}</option>`).join(''); profileSelect.value=id; saveActiveProject();};
+  projectStatusBtn.onclick=()=>{const v=prompt('Statut: draft/approved/frozen',state.projectStatus); if(!v) return; state.projectStatus=v; updateStatus(); saveActiveProject();};
+  auditMode.checked=state.rules.auditMode; auditMode.onchange=e=>{state.rules.auditMode=e.target.checked; buildWarnings(); saveActiveProject();};
+  ruleAisleWidth.checked=state.rules.aisleMinWidth; ruleAisleWidth.onchange=e=>{state.rules.aisleMinWidth=e.target.checked; buildWarnings();};
+  ruleExitClear.checked=state.rules.exitClear; ruleExitClear.onchange=e=>{state.rules.exitClear=e.target.checked; buildWarnings();};
+  ruleUnknownBin.checked=state.rules.knownBins; ruleUnknownBin.onchange=e=>{state.rules.knownBins=e.target.checked; buildWarnings();};
+  runAuditBtn.onclick=()=>{buildWarnings(); toast('Audit mis à jour');};
+  repairProjectBtn.onclick=()=>{repairProjectData(state); buildWarnings(); saveActiveProject(); toast('Projet réparé');};
+  reviewModeBtn.onclick=()=>{state.reviewMode=!state.reviewMode; toast('Review '+(state.reviewMode?'ON':'OFF'));};
+  compareSnapshotBtn.onclick=()=>{if(state.snapshots.length<2){toast('2 versions min'); return;} const a=state.snapshots[0].data.cells||[]; const b=state.snapshots[1].data.cells||[]; state.diffCells=[]; for(let i=0;i<Math.min(a.length,b.length);i++) if(a[i]!==b[i]) state.diffCells.push(i); toast(`Diff: ${state.diffCells.length}`); renderAll();};
+  autoHidePanels.onchange=e=>{state.autoHidePanels=e.target.checked;};
+  focusMode.onchange=e=>document.body.classList.toggle('focus-mode',e.target.checked);
+  perfMode.onchange=e=>{state.perfMode=e.target.checked; document.body.classList.toggle('perf-mode',state.perfMode);};
+  fpsDebug.onchange=e=>{state.fpsDebug=e.target.checked;};
+
   window.addEventListener('resize',renderAll);
   window.addEventListener('keydown',e=>{
     const cmd=e.ctrlKey||e.metaKey;
@@ -430,7 +485,7 @@ function bindUI(){
 
   // touch gestures pinch+pan
   let touches=[];
-  wrap.addEventListener('touchstart',e=>{touches=[...e.touches]; if(e.touches.length===1){const t=e.touches[0]; pointerDown({clientX:t.clientX,clientY:t.clientY,button:0,shiftKey:state.multiMode,altKey:false});}}, {passive:false});
+  wrap.addEventListener('touchstart',e=>{touches=[...e.touches]; if(state.autoHidePanels){leftPanel.classList.remove('open'); rightPanel.classList.remove('open');} if(e.touches.length===1){const t=e.touches[0]; pointerDown({clientX:t.clientX,clientY:t.clientY,button:0,shiftKey:state.multiMode,altKey:false});}}, {passive:false});
   wrap.addEventListener('touchmove',e=>{
     if(e.touches.length===2){e.preventDefault(); const [a,b]=e.touches; const prev=touches; if(prev.length===2){const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY); const d0=Math.hypot(prev[0].clientX-prev[1].clientX,prev[0].clientY-prev[1].clientY); state.zoom=Math.max(.35,Math.min(3.2,state.zoom*(d/d0))); state.panX += ((a.clientX+b.clientX)-(prev[0].clientX+prev[1].clientX))/2; state.panY += ((a.clientY+b.clientY)-(prev[0].clientY+prev[1].clientY))/2; renderAll();}
       touches=[...e.touches];
@@ -479,6 +534,10 @@ function visibleCellsSnapshot(){ return {gridW:state.gridW,gridH:state.gridH,cel
 async function ensure3DView(){ if(state.view3d) return state.view3d; const mod = await import('./view3d.js'); state.view3d = new mod.Layout3DView({container:view3dPanel,canvas:view3dCanvas,infoEl:view3dInfo,legendEl:view3dLegend,onSelect:(d)=>{ state.view3dSelected=`${d.x},${d.y}`; }}); return state.view3d; }
 async function toggle3D(){ const panel=view3dPanel; const is3D = state.viewMode==='3d'; if(is3D){panel.classList.add('hidden'); state.viewMode='2d'; renderAll(); return;} state.viewMode='3d'; panel.classList.remove('hidden'); const view=await ensure3DView(); view.setOptions(state.view3dSettings); view.setLayout(visibleCellsSnapshot()); }
 function refresh3DIfOpen(){ if(state.viewMode==='3d' && state.view3d){ state.view3d.setOptions(state.view3dSettings); state.view3d.setLayout(visibleCellsSnapshot()); }}
+
+let fpsTick=0,lastFpsTime=performance.now(),frames=0;
+function updateFps(){frames++; const now=performance.now(); if(now-lastFpsTime>500){fpsTick=Math.round((frames*1000)/(now-lastFpsTime)); frames=0; lastFpsTime=now; let el=document.getElementById('fpsDebugEl'); if(state.fpsDebug){if(!el){el=document.createElement('div'); el.id='fpsDebugEl'; el.className='fps-debug'; document.querySelector('.editor').appendChild(el);} el.textContent=`FPS ${fpsTick}`;} else if(el){el.remove();}} requestAnimationFrame(updateFps);}
+requestAnimationFrame(updateFps);
 
 bindUI();
 if(!localStorage.getItem(STORAGE_ROOT)){demo();}

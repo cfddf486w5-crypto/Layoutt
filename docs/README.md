@@ -81,3 +81,26 @@ Validation import:
 6. Vérifier export/import JSON (schemaVersion conservée).
 7. Vérifier export PNG.
 8. Vérifier iPhone: pinch zoom, pan 2 doigts, drawers, barre flottante.
+
+## Pack C/D/E ajouté (métier + iPhone + perf)
+- Tags avancés: `name:category:color` dans Propriétés + tags simples.
+- Champs custom par objet: `capacity`, `levels`, `zone`, `aisle`.
+- Priorité bin optionnelle `P1..P7` par cellule/objet.
+- Export CSV bins (`bin,type,zone,aisle,position,tags`).
+- Rapport PDF via fenêtre d'impression (légende + safety).
+- Rule engine local (toggles): allée min, issues dégagées, bins connus.
+- Mode audit + panneau Règles dans la colonne droite.
+- Import JSON: `replace` ou `merge` assisté.
+- Migration v1→v2 + fonction “Réparer projet” pour champs manquants.
+- Profils locaux (auteur/updatedAt), statut projet (`draft/approved/frozen`) + watermark PNG.
+- Mode review (sans écriture auto), comparaison de snapshots (diff highlight canvas).
+- Toggle FR/EN (stocké projet), mode iPhone, auto-hide panneaux, focus mode.
+- Mode performance (désactive effets), overlay FPS debug.
+
+## Format JSON v2 (extraits)
+- `layout.rules`
+- `layout.tagsCatalog`
+- `layout.profiles`, `layout.activeProfileId`
+- `layout.projectStatus`, `layout.language`
+- `layout.comments`, `layout.errorLogs`
+- `layout.cellProps["x,y"].customFields`, `binPriority`, `tagDetails`, `author`, `updatedAt`
