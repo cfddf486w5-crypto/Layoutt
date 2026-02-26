@@ -8,20 +8,26 @@
 </head>
 <body>
   <header class="topbar">
+    <button id="toggleLeftDrawer" class="drawer-toggle" aria-label="Ouvrir palette">☰ Palette</button>
     <strong>DL Layout Editor — Pro</strong>
     <div class="toolbar" id="toolButtons"></div>
     <div class="toolbar">
-      <button id="undoBtn">Undo</button><button id="redoBtn">Redo</button>
-      <button id="exportJsonBtn">Export JSON</button><button id="importJsonBtn">Import JSON</button>
-      <button id="exportPngBtn">Export PNG</button><button id="toggle3dBtn">3D</button><input type="file" id="importJsonInput" accept="application/json" hidden />
+      <button id="measureBtn" title="Mesure (M)">Mesure</button>
+      <button id="multiBtn" title="Mode multi-sélection iPhone">Multi</button>
+      <button id="undoBtn" title="Undo (Ctrl/Cmd+Z)">Undo</button><button id="redoBtn" title="Redo (Ctrl/Cmd+Y)">Redo</button>
+      <button id="exportJsonBtn" title="Exporter JSON">Export JSON</button><button id="importJsonBtn" title="Importer JSON">Import JSON</button>
+      <button id="saveBtn" title="Sauvegarder local (Ctrl/Cmd+S)">Save</button>
+      <button id="exportPngBtn" title="Exporter PNG">Export PNG</button><button id="toggle3dBtn" title="Vue 3D">3D</button><input type="file" id="importJsonInput" accept="application/json" hidden />
     </div>
+    <button id="toggleRightDrawer" class="drawer-toggle" aria-label="Ouvrir panneau projet">⚙ Projet</button>
   </header>
 
   <main class="layout">
-    <aside class="panel left">
+    <aside class="panel left" id="leftPanel">
       <h3>Palette</h3>
       <input id="searchInput" placeholder="Rechercher (porte, rack, P3...)" />
       <div id="categoryTabs" class="tabs"></div>
+      <div id="recentBox"></div>
       <div id="favoriteBox"></div>
       <div id="paletteList" class="palette"></div>
     </aside>
@@ -31,7 +37,21 @@
         <canvas id="blueprintCanvas"></canvas>
         <canvas id="gridCanvas"></canvas>
       </div>
+      <div class="statusbar" id="statusBar"></div>
       <div class="quickbar" id="quickbar"></div>
+      <div class="floating-actions hidden" id="floatingActions">
+        <button data-action="move">Déplacer</button>
+        <button data-action="duplicate">Dupliquer</button>
+        <button data-action="delete">Supprimer</button>
+        <button data-action="rotate">Rotate</button>
+        <button data-action="props">Props</button>
+      </div>
+      <div class="precision-pad hidden" id="precisionPad">
+        <button data-dx="0" data-dy="-1">↑</button>
+        <div><button data-dx="-1" data-dy="0">←</button><button data-dx="1" data-dy="0">→</button></div>
+        <button data-dx="0" data-dy="1">↓</button>
+      </div>
+
       <div class="view3d hidden" id="view3dPanel">
         <canvas id="view3dCanvas"></canvas>
         <div class="view3d-controls">
@@ -47,28 +67,53 @@
         <div class="view3d-legend" id="view3dLegend"></div>
       </div>
 
+      <div id="contextMenu" class="context-menu hidden"></div>
     </section>
 
-    <aside class="panel right">
+    <aside class="panel right" id="rightPanel">
       <h3>Projet</h3>
+      <div class="row">
+        <select id="projectSelect"></select>
+        <button id="newProjectBtn">New</button><button id="renameProjectBtn">Renommer</button>
+      </div>
+      <div class="row"><button id="duplicateProjectBtn">Dupliquer</button><button id="deleteProjectBtn">Supprimer</button></div>
       <label>Grille W <input id="gridW" type="number" min="10" max="300" value="60" /></label>
       <label>Grille H <input id="gridH" type="number" min="10" max="300" value="40" /></label>
       <label>Taille cellule <input id="cellSize" type="number" min="8" max="64" value="24" /></label>
+      <label>Échelle (1 cellule =) <input id="cellRealSize" type="number" min="0.1" step="0.1" value="100" /></label>
       <button id="resizeGridBtn">Appliquer</button>
 
+      <h3>Snapping & Vue</h3>
+      <label><input id="snapGrid" type="checkbox" checked /> Snap grille</label>
+      <label><input id="snapObjects" type="checkbox" checked /> Snap bords</label>
+      <label><input id="snapCenters" type="checkbox" checked /> Snap centres</label>
+      <label><input id="snapGuides" type="checkbox" checked /> Snap guides</label>
+      <label><input id="showMiniMap" type="checkbox" /> Mini-map</label>
+      <label><input id="presentationMode" type="checkbox" /> Mode présentation</label>
+
       <h3>Calques</h3>
+      <div class="row"><button id="soloLayerBtn">Solo</button><select id="layerFilter"></select></div>
       <div id="layersBox"></div>
 
       <h3>Blueprint</h3>
       <input type="file" id="blueprintInput" accept="image/png,image/jpeg" />
       <label>Opacity <input id="bpOpacity" type="range" min="0" max="1" step="0.05" value="0.5" /></label>
       <label>Scale <input id="bpScale" type="range" min="0.2" max="3" step="0.05" value="1" /></label>
+      <label>Luminosité <input id="bpBrightness" type="range" min="0.4" max="1.6" step="0.05" value="1" /></label>
+      <label>Contraste <input id="bpContrast" type="range" min="0.4" max="1.8" step="0.05" value="1" /></label>
       <button id="bpLockBtn">Verrou blueprint: OFF</button>
+      <button id="bpCalibrateBtn">Calibrer blueprint</button>
 
       <h3>Propriétés</h3>
       <div id="propsBox">Aucune sélection.</div>
-      <button id="deleteSelectionBtn">Supprimer sélection</button>
-      <button id="applyTileSelectionBtn">Appliquer tile actif à la sélection</button>
+      <div class="row"><button id="deleteSelectionBtn">Supprimer</button><button id="duplicateSelectionBtn">Dupliquer</button></div>
+      <div class="row"><button id="applyTileSelectionBtn">Appliquer tile</button><button id="replaceTypeBtn">Remplacer type</button></div>
+      <div class="row"><button id="alignBtn">Aligner</button><button id="distributeBtn">Distribuer</button></div>
+      <div class="row"><button id="repeatBtn">Répéter</button><button id="historyBtn">Historique</button></div>
+
+      <h3>Versions</h3>
+      <button id="createSnapshotBtn">Créer version</button>
+      <div id="snapshotsBox"></div>
 
       <h3>Warnings</h3>
       <ul id="warnings"></ul>

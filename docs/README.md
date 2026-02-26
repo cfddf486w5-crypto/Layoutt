@@ -1,48 +1,80 @@
 # DL Layout Editor — Pro
 
-Application web offline (sans dépendances) pour éditer un plan d'entrepôt en grille, optimisée iPhone + PC.
+Application web offline-first (sans backend) pour éditer un plan d'entrepôt en grille, avec focus PC + iPhone.
 
 ## Lancer
-1. Ouvrir `index.html` directement dans le navigateur.
-2. Tout est local (localStorage + fichiers JSON/PNG).
+1. Ouvrir `index.html` dans un navigateur moderne (Safari iPhone ou desktop).
+2. L'application sauvegarde automatiquement les projets en `localStorage`.
+3. Utiliser Export/Import JSON pour backup externe.
 
-## Fonctionnalités
-- Canvas performant avec pan/zoom (wheel, pinch, outil pan).
-- Outils: select, brush, eraser, line, rect (plein/contour), bucket, pan, eyedropper.
-- Calques: STRUCTURE/STORAGE/ZONES/SAFETY/ANNOTATIONS (visible + lock).
-- Palette pro: recherche, catégories, favoris persistés.
-- Propriétés: rotation, note, tags, modifications groupées.
-- Blueprint image: import, opacity, scale, offset (Alt+drag), lock.
-- Export/Import JSON complet + autosave/restore.
-- Export PNG du plan.
-- Mode 3D offline (bouton `3D`) avec rotation, Walk, reset caméra, focus sélection et panneau infos.
-- Warnings: portes isolées, bins inconnus.
-- Undo/Redo avec historique.
+## Outils
+- Sélection, Pinceau, Gomme, Ligne, Rectangle, Remplissage, Panoramique, Pipette.
+- Outil Mesure (distance A→B en cellules + conversion via échelle projet).
+- Menu contextuel (clic droit / long-press): dupliquer, supprimer, verrouiller, changer couleur.
 
-## Gestes / Raccourcis
-- iPhone: tap pour peindre, pinch pour zoom, long-press pour multi-sélection.
-- PC: molette zoom, Shift+clic multi-sélection, Espace = Pan.
-- `Ctrl+Z` / `Ctrl+Y`, `Delete`.
+## Raccourcis clavier (PC)
+- `V` sélection, `B` pinceau, `E` gomme, `L` ligne, `R` rectangle, `F` remplissage, `H` pan, `I` pipette.
+- `Ctrl/Cmd + Z` undo.
+- `Ctrl/Cmd + Shift + Z` redo.
+- `Ctrl/Cmd + Y` redo.
+- `Ctrl/Cmd + C` copier sélection.
+- `Ctrl/Cmd + V` coller intelligent (offset).
+- `Ctrl/Cmd + D` dupliquer.
+- `Delete` / `Backspace` supprimer sélection.
+- `Ctrl/Cmd + S` sauvegarde locale.
+- `Space` maintenu = pan temporaire.
+- `Alt` pendant drag sélection = duplication en glissant.
+- Flèches = déplacement précision (Shift+flèche = pas de 5 cellules).
 
-## Dataset démo
-Le projet démarre avec un mini entrepôt incluant racks, zones, portes et bins P1 à P7.
+## Gestes iPhone
+- Tap: action outil actif.
+- Long-press: tooltip + menu contextuel.
+- Pinch: zoom.
+- 2 doigts: pan.
+- Bouton `Multi`: active la multi-sélection tactile.
+- Barre flottante sur sélection: dupliquer, supprimer, rotation, accès propriétés.
+- Pad précision: déplacement cellule par cellule.
 
-## Tests manuels
-1. Vérifier fluidité sur grille 120x80.
-2. Vérifier verrouillage calque (aucune modif possible).
-3. Eyedropper: cliquer une cellule et repeindre ailleurs.
-4. Export JSON, recharger page, Import JSON => restauration complète.
-5. Export PNG et ouvrir l'image.
-6. Charger un blueprint puis modifier opacité/scale.
+## Calques / Projet / Versions
+- Par calque: visibilité, lock, opacité, ordre haut/bas.
+- Solo calque (bouton solo ou Alt+clic sur l’œil).
+- Filtre d'affichage par calque.
+- Multi-projets: créer, renommer, dupliquer, supprimer.
+- Snapshots de versions avec note + restauration.
 
+## Blueprint
+- Import image blueprint.
+- Opacité, scale, luminosité, contraste.
+- Lock blueprint.
+- Calibration d'échelle (distance en cellules ↔ distance réelle).
 
-## Mode 3D
-1. Cliquer sur `3D` dans la topbar pour basculer en vue maquette.
-2. Contrôles disponibles: Orbit (drag + wheel), `Walk`, `Reset view`, `Focus`.
-3. Ajuster `Hauteur murs`, `Épaisseur murs`, option blueprint au sol et qualité `Low/High`.
-4. Tap/clic sur un objet pour afficher `tileId`, label et coordonnées.
-5. En revenant en 2D, la dernière sélection 3D est surlignée.
+## Export / Import JSON
+Le JSON exporté contient:
+- `schemaVersion`
+- `appVersion`
+- `date`
+- `projectId`
+- `layout`:
+  - `gridW`, `gridH`, `cellSize`, `cellRealSize`
+  - `cells`, `cellProps`
+  - `layerStates`, `layerOrder`, `layerFilter`
+  - `favorites`, `recentTiles`
+  - `blueprint`
+  - `panX`, `panY`, `zoom`
+  - `snapshots`
 
-### Notes performance
-- Les objets répétitifs sont simplifiés en mode `Low` (échantillonnage 1 cellule sur 2).
-- Palette de matériaux réduite (couleurs unies) pour conserver la fluidité mobile.
+Validation import:
+- JSON invalide ou schéma incomplet => message clair, pas de crash.
+
+## Export PNG
+- Export PNG de la vue actuelle du layout (grille + blueprint + contenu).
+
+## Tests manuels conseillés
+1. Vérifier tous les raccourcis clavier outils + undo/redo + copy/paste.
+2. Vérifier multi-sélection (Shift+clic + marquee).
+3. Vérifier duplication en drag avec `Alt`.
+4. Vérifier projets (create/rename/duplicate/delete).
+5. Vérifier snapshots (create + restore).
+6. Vérifier export/import JSON (schemaVersion conservée).
+7. Vérifier export PNG.
+8. Vérifier iPhone: pinch zoom, pan 2 doigts, drawers, barre flottante.
