@@ -220,7 +220,7 @@ function pointerUp(e){
   state.pointerStart=null; state.dragMode=''; renderAll(); renderProps(); saveActiveProject();
 }
 
-function setTool(tool){state.activeTool=tool; renderTools(); updateStatus();}
+function setTool(tool){state.activeTool=tool; renderTools(); updateStatus(); closeAllMenus();}
 function renderTools(){
   const box=document.getElementById('toolButtons'); const quick=document.getElementById('quickbar'); box.innerHTML=''; quick.innerHTML='';
   TOOLS.forEach(t=>{
@@ -470,8 +470,34 @@ function toast(t){const el=document.getElementById('toast'); el.textContent=t; e
 function vibrate(ms=8){if(navigator.vibrate) navigator.vibrate(ms)}
 function attachLongPressTooltip(el,text){let timer; el.addEventListener('touchstart',()=>{timer=setTimeout(()=>toast(text),500);},{passive:true}); ['touchend','touchcancel'].forEach(evt=>el.addEventListener(evt,()=>clearTimeout(timer),{passive:true}));}
 function loadBlueprint(){ if(!state.blueprint.src){state.blueprint.img=null; return;} const i=new Image(); i.onload=()=>{state.blueprint.img=i; renderAll();}; i.src=state.blueprint.src; }
+function closeAllMenus(){document.querySelectorAll('.menu-group.open').forEach(group=>{group.classList.remove('open'); const trigger=group.querySelector('.menu-trigger'); if(trigger) trigger.setAttribute('aria-expanded','false');});}
+function bindTopMenus(){
+  document.querySelectorAll('.menu-trigger').forEach(trigger=>{
+    trigger.onclick=e=>{
+      e.stopPropagation();
+      const group=trigger.closest('.menu-group');
+      const shouldOpen=!group.classList.contains('open');
+      closeAllMenus();
+      group.classList.toggle('open',shouldOpen);
+      trigger.setAttribute('aria-expanded',String(shouldOpen));
+    };
+  });
+  document.querySelectorAll('.menu-subtoggle').forEach(toggle=>{
+    toggle.onclick=()=>{
+      const panel=toggle.nextElementSibling;
+      const expanded=toggle.getAttribute('aria-expanded')==='true';
+      toggle.setAttribute('aria-expanded',String(!expanded));
+      panel.classList.toggle('hidden',expanded);
+    };
+  });
+  document.querySelectorAll('.menu-dropdown .menu-item').forEach(item=>{
+    item.addEventListener('click',()=>setTimeout(closeAllMenus,0));
+  });
+  document.addEventListener('pointerdown',e=>{if(!e.target.closest('.menu-group')) closeAllMenus();});
+}
 
 function bindUI(){
+  bindTopMenus();
   searchInput.oninput=renderPalette;
   wrap.addEventListener('pointerdown',pointerDown); wrap.addEventListener('pointermove',pointerMove); window.addEventListener('pointerup',pointerUp);
   wrap.addEventListener('contextmenu',e=>e.preventDefault());

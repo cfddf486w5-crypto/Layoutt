@@ -19,21 +19,65 @@
 </head>
 <body>
   <header class="topbar">
-    <button id="toggleLeftDrawer" class="drawer-toggle" aria-label="Ouvrir palette">☰ Palette</button>
-    <strong>DL Layout Editor — Pro</strong>
-    <div class="toolbar" id="toolButtons"></div>
-    <div class="toolbar">
-      <button id="measureBtn" title="Mesure (M)">Mesure</button>
-      <button id="multiBtn" title="Mode multi-sélection iPhone">Multi</button>
-      <button id="recenterBtn" title="Recentrer la vue">Recentrer</button>
-      <button id="fitBtn" title="Ajuster au contenu">Fit</button>
-      <button id="undoBtn" title="Undo (Ctrl/Cmd+Z)">Undo</button><button id="redoBtn" title="Redo (Ctrl/Cmd+Y)">Redo</button>
-      <button id="exportJsonBtn" title="Exporter JSON">Export JSON</button><button id="importJsonBtn" title="Importer JSON">Import JSON</button><button id="mergeJsonBtn" title="Importer en fusion">Merge JSON</button><button id="exportCsvBtn" title="Exporter bins CSV">Export CSV</button><button id="exportPdfBtn" title="Rapport PDF">Export PDF</button>
-      <button id="saveBtn" title="Sauvegarder local (Ctrl/Cmd+S)">Save</button>
-      <button id="exportPngBtn" title="Exporter PNG">Export PNG</button><button id="toggle3dBtn" title="Vue 3D">3D</button><input type="file" id="importJsonInput" accept="application/json" hidden />
+    <div class="topbar-main">
+      <button id="toggleLeftDrawer" class="drawer-toggle" aria-label="Ouvrir palette">☰ Palette</button>
+      <strong>DL Layout Editor — Pro</strong>
+      <div class="menu-bar" aria-label="Menus principaux">
+        <div class="menu-group">
+          <button class="menu-trigger" data-menu-target="toolsMenu" aria-haspopup="true" aria-expanded="false">Outils</button>
+          <div class="menu-dropdown" id="toolsMenu">
+            <button id="measureBtn" class="menu-item" title="Mesure (M)">Mesure</button>
+            <button id="multiBtn" class="menu-item" title="Mode multi-sélection iPhone">Multi</button>
+            <div class="menu-subgroup">
+              <button class="menu-subtoggle" type="button" aria-expanded="true">Outils de dessin</button>
+              <div class="menu-subpanel">
+                <div class="tool-grid" id="toolButtons"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="menu-group">
+          <button class="menu-trigger" data-menu-target="viewMenu" aria-haspopup="true" aria-expanded="false">Vue</button>
+          <div class="menu-dropdown" id="viewMenu">
+            <button id="recenterBtn" class="menu-item" title="Recentrer la vue">Recentrer</button>
+            <button id="fitBtn" class="menu-item" title="Ajuster au contenu">Fit</button>
+            <button id="toggle3dBtn" class="menu-item" title="Vue 3D">3D</button>
+            <button id="toggleIphoneModeBtn" class="menu-item" aria-label="Mode iPhone">📱 Mode iPhone</button>
+          </div>
+        </div>
+        <div class="menu-group">
+          <button class="menu-trigger" data-menu-target="editMenu" aria-haspopup="true" aria-expanded="false">Édition</button>
+          <div class="menu-dropdown" id="editMenu">
+            <button id="undoBtn" class="menu-item" title="Undo (Ctrl/Cmd+Z)">Undo</button>
+            <button id="redoBtn" class="menu-item" title="Redo (Ctrl/Cmd+Y)">Redo</button>
+            <button id="saveBtn" class="menu-item" title="Sauvegarder local (Ctrl/Cmd+S)">Save</button>
+          </div>
+        </div>
+        <div class="menu-group">
+          <button class="menu-trigger" data-menu-target="exportMenu" aria-haspopup="true" aria-expanded="false">Export</button>
+          <div class="menu-dropdown" id="exportMenu">
+            <div class="menu-subgroup">
+              <button class="menu-subtoggle" type="button" aria-expanded="true">JSON</button>
+              <div class="menu-subpanel">
+                <button id="exportJsonBtn" class="menu-item" title="Exporter JSON">Export JSON</button>
+                <button id="importJsonBtn" class="menu-item" title="Importer JSON">Import JSON</button>
+                <button id="mergeJsonBtn" class="menu-item" title="Importer en fusion">Merge JSON</button>
+              </div>
+            </div>
+            <div class="menu-subgroup">
+              <button class="menu-subtoggle" type="button" aria-expanded="false">Fichiers</button>
+              <div class="menu-subpanel hidden">
+                <button id="exportCsvBtn" class="menu-item" title="Exporter bins CSV">Export CSV</button>
+                <button id="exportPdfBtn" class="menu-item" title="Rapport PDF">Export PDF</button>
+                <button id="exportPngBtn" class="menu-item" title="Exporter PNG">Export PNG</button>
+              </div>
+            </div>
+            <input type="file" id="importJsonInput" accept="application/json" hidden />
+          </div>
+        </div>
+      </div>
+      <button id="toggleRightDrawer" class="drawer-toggle" aria-label="Ouvrir panneau projet">⚙ Projet</button>
     </div>
-    <button id="toggleIphoneModeBtn" class="drawer-toggle" aria-label="Mode iPhone">📱 iPhone</button>
-    <button id="toggleRightDrawer" class="drawer-toggle" aria-label="Ouvrir panneau projet">⚙ Projet</button>
   </header>
 
   <main class="layout">

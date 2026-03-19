@@ -17,6 +17,7 @@ Application web offline-first (sans backend) pour éditer un plan d'entrepôt en
 - Sélection, Pinceau, Gomme, Ligne, Rectangle, Remplissage, Panoramique, Pipette.
 - Outil Mesure (distance A→B en cellules + conversion via échelle projet).
 - Menu contextuel (clic droit / long-press): dupliquer, supprimer, verrouiller, changer couleur.
+- Barre supérieure compacte avec menus ouvrables `Outils`, `Vue`, `Édition` et `Export`, plus sous-menus pour regrouper les actions sans occuper la moitié de l'écran.
 
 ## Raccourcis clavier (PC)
 - `V` sélection, `B` pinceau, `E` gomme, `L` ligne, `R` rectangle, `F` remplissage, `H` pan, `I` pipette.
@@ -87,7 +88,8 @@ Validation import:
 6. Vérifier export/import JSON (schemaVersion conservée).
 7. Vérifier export PNG.
 8. Vérifier iPhone: pinch zoom, pan 2 doigts, drawers, barre flottante.
-9. Vérifier installation PWA: bannière visible, ajout écran d'accueil iPhone, lancement standalone, fonctionnement offline après chargement initial.
+9. Vérifier les nouveaux menus ouvrables et sous-menus: ouverture/fermeture, sélection d'outil, exports et actions de vue.
+10. Vérifier installation PWA: bannière visible, ajout écran d'accueil iPhone, lancement standalone, fonctionnement offline après chargement initial.
 
 ## Pack C/D/E ajouté (métier + iPhone + perf)
 - Tags avancés: `name:category:color` dans Propriétés + tags simples.
