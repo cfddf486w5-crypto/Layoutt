@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>DL Layout Editor — Pro</title>
-  <meta name="theme-color" content="#0b1220" />
+  <meta name="theme-color" content="#d8e8ff" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="DL Layout" />
@@ -20,69 +20,87 @@
 <body>
   <header class="topbar">
     <div class="topbar-main">
-      <button id="toggleLeftDrawer" class="drawer-toggle" aria-label="Ouvrir palette">☰ Palette</button>
-      <strong class="app-title">DL Layout Editor — Pro</strong>
-      <div class="menu-bar" aria-label="Menus principaux">
-        <div class="menu-group">
-          <button class="menu-trigger" data-menu-target="toolsMenu" aria-haspopup="true" aria-expanded="false">Outils</button>
-          <div class="menu-dropdown" id="toolsMenu">
-            <button id="measureBtn" class="menu-item" title="Mesure (M)">Mesure</button>
-            <button id="multiBtn" class="menu-item" title="Mode multi-sélection iPhone">Multi</button>
-            <div class="menu-subgroup">
-              <button class="menu-subtoggle" type="button" aria-expanded="true">Outils de dessin</button>
-              <div class="menu-subpanel">
-                <div class="tool-grid" id="toolButtons"></div>
-              </div>
-            </div>
-          </div>
+      <div class="topbar-heading">
+        <div class="brand-block">
+          <span class="brand-kicker">Studio planning</span>
+          <strong class="app-title">DL Layout Editor — Pro</strong>
+          <p class="brand-subtitle">Édition, audit, export et visualisation 3D dans une interface plus claire et professionnelle.</p>
         </div>
-        <div class="menu-group">
-          <button class="menu-trigger" data-menu-target="viewMenu" aria-haspopup="true" aria-expanded="false">Vue</button>
-          <div class="menu-dropdown" id="viewMenu">
-            <button id="recenterBtn" class="menu-item" title="Recentrer la vue">Recentrer</button>
-            <button id="fitBtn" class="menu-item" title="Ajuster au contenu">Fit</button>
-            <button id="toggle3dBtn" class="menu-item" title="Vue 3D">3D</button>
-            <button id="toggleIphoneModeBtn" class="menu-item" aria-label="Mode iPhone">📱 Mode iPhone</button>
-          </div>
-        </div>
-        <div class="menu-group">
-          <button class="menu-trigger" data-menu-target="editMenu" aria-haspopup="true" aria-expanded="false">Édition</button>
-          <div class="menu-dropdown" id="editMenu">
-            <button id="undoBtn" class="menu-item" title="Undo (Ctrl/Cmd+Z)">Undo</button>
-            <button id="redoBtn" class="menu-item" title="Redo (Ctrl/Cmd+Y)">Redo</button>
-            <button id="saveBtn" class="menu-item" title="Sauvegarder local (Ctrl/Cmd+S)">Save</button>
-          </div>
-        </div>
-        <div class="menu-group">
-          <button class="menu-trigger" data-menu-target="exportMenu" aria-haspopup="true" aria-expanded="false">Export</button>
-          <div class="menu-dropdown" id="exportMenu">
-            <div class="menu-subgroup">
-              <button class="menu-subtoggle" type="button" aria-expanded="true">JSON</button>
-              <div class="menu-subpanel">
-                <button id="exportJsonBtn" class="menu-item" title="Exporter JSON">Export JSON</button>
-                <button id="importJsonBtn" class="menu-item" title="Importer JSON">Import JSON</button>
-                <button id="mergeJsonBtn" class="menu-item" title="Importer en fusion">Merge JSON</button>
-              </div>
-            </div>
-            <div class="menu-subgroup">
-              <button class="menu-subtoggle" type="button" aria-expanded="false">Fichiers</button>
-              <div class="menu-subpanel hidden">
-                <button id="exportCsvBtn" class="menu-item" title="Exporter bins CSV">Export CSV</button>
-                <button id="exportPdfBtn" class="menu-item" title="Rapport PDF">Export PDF</button>
-                <button id="exportPngBtn" class="menu-item" title="Exporter PNG">Export PNG</button>
-              </div>
-            </div>
-            <input type="file" id="importJsonInput" accept="application/json" hidden />
-          </div>
+        <div class="topbar-badges" aria-label="Points forts">
+          <span class="topbar-badge">100% offline</span>
+          <span class="topbar-badge">Export JSON / PNG / PDF</span>
+          <span class="topbar-badge">Compatible mobile & desktop</span>
         </div>
       </div>
-      <button id="toggleRightDrawer" class="drawer-toggle" aria-label="Ouvrir panneau projet">⚙ Projet</button>
+
+      <div class="topbar-controls">
+        <button id="toggleLeftDrawer" class="drawer-toggle" aria-label="Ouvrir palette">☰ Palette</button>
+        <div class="menu-bar" aria-label="Menus principaux">
+          <div class="menu-group">
+            <button class="menu-trigger" data-menu-target="toolsMenu" aria-haspopup="true" aria-expanded="false">Outils</button>
+            <div class="menu-dropdown" id="toolsMenu">
+              <button id="measureBtn" class="menu-item" title="Mesure (M)">Mesure</button>
+              <button id="multiBtn" class="menu-item" title="Mode multi-sélection iPhone">Multi</button>
+              <div class="menu-subgroup">
+                <button class="menu-subtoggle" type="button" aria-expanded="true">Outils de dessin</button>
+                <div class="menu-subpanel">
+                  <div class="tool-grid" id="toolButtons"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="menu-group">
+            <button class="menu-trigger" data-menu-target="viewMenu" aria-haspopup="true" aria-expanded="false">Vue</button>
+            <div class="menu-dropdown" id="viewMenu">
+              <button id="recenterBtn" class="menu-item" title="Recentrer la vue">Recentrer</button>
+              <button id="fitBtn" class="menu-item" title="Ajuster au contenu">Fit</button>
+              <button id="toggle3dBtn" class="menu-item" title="Vue 3D">3D</button>
+              <button id="toggleIphoneModeBtn" class="menu-item" aria-label="Mode iPhone">📱 Mode iPhone</button>
+            </div>
+          </div>
+          <div class="menu-group">
+            <button class="menu-trigger" data-menu-target="editMenu" aria-haspopup="true" aria-expanded="false">Édition</button>
+            <div class="menu-dropdown" id="editMenu">
+              <button id="undoBtn" class="menu-item" title="Undo (Ctrl/Cmd+Z)">Undo</button>
+              <button id="redoBtn" class="menu-item" title="Redo (Ctrl/Cmd+Y)">Redo</button>
+              <button id="saveBtn" class="menu-item" title="Sauvegarder local (Ctrl/Cmd+S)">Save</button>
+            </div>
+          </div>
+          <div class="menu-group">
+            <button class="menu-trigger" data-menu-target="exportMenu" aria-haspopup="true" aria-expanded="false">Export</button>
+            <div class="menu-dropdown" id="exportMenu">
+              <div class="menu-subgroup">
+                <button class="menu-subtoggle" type="button" aria-expanded="true">JSON</button>
+                <div class="menu-subpanel">
+                  <button id="exportJsonBtn" class="menu-item" title="Exporter JSON">Export JSON</button>
+                  <button id="importJsonBtn" class="menu-item" title="Importer JSON">Import JSON</button>
+                  <button id="mergeJsonBtn" class="menu-item" title="Importer en fusion">Merge JSON</button>
+                </div>
+              </div>
+              <div class="menu-subgroup">
+                <button class="menu-subtoggle" type="button" aria-expanded="false">Fichiers</button>
+                <div class="menu-subpanel hidden">
+                  <button id="exportCsvBtn" class="menu-item" title="Exporter bins CSV">Export CSV</button>
+                  <button id="exportPdfBtn" class="menu-item" title="Rapport PDF">Export PDF</button>
+                  <button id="exportPngBtn" class="menu-item" title="Exporter PNG">Export PNG</button>
+                </div>
+              </div>
+              <input type="file" id="importJsonInput" accept="application/json" hidden />
+            </div>
+          </div>
+        </div>
+        <button id="toggleRightDrawer" class="drawer-toggle" aria-label="Ouvrir panneau projet">⚙ Projet</button>
+      </div>
     </div>
   </header>
 
   <main class="layout">
     <aside class="panel left" id="leftPanel">
-      <h3>Palette</h3>
+      <div class="panel-intro">
+        <span class="panel-kicker">Bibliothèque</span>
+        <h3>Palette</h3>
+        <p>Retrouvez rapidement les éléments, les favoris et les catégories utiles au plan.</p>
+      </div>
       <input id="searchInput" placeholder="Rechercher (porte, rack, P3...)" />
       <div id="categoryTabs" class="tabs"></div>
       <div id="recentBox"></div>
@@ -91,9 +109,25 @@
     </aside>
 
     <section class="editor">
-      <div class="canvas-wrap" id="canvasWrap">
-        <canvas id="blueprintCanvas"></canvas>
-        <canvas id="gridCanvas"></canvas>
+      <div class="editor-shell">
+        <div class="workspace-banner">
+          <div>
+            <span class="panel-kicker">Workspace</span>
+            <h2>Canvas principal</h2>
+            <p>Travaillez sur votre layout avec un repère visuel plus net, une hiérarchie claire et des contrôles toujours accessibles.</p>
+          </div>
+          <div class="workspace-banner-stats">
+            <div><strong>Pan / Zoom</strong><span>Navigation fluide</span></div>
+            <div><strong>Undo / Redo</strong><span>Historique immédiat</span></div>
+            <div><strong>3D / Audit</strong><span>Analyse du projet</span></div>
+          </div>
+        </div>
+        <div class="canvas-stage">
+          <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="blueprintCanvas"></canvas>
+            <canvas id="gridCanvas"></canvas>
+          </div>
+        </div>
       </div>
       <div class="statusbar" id="statusBar"></div>
       <div class="quickbar" id="quickbar"></div>
@@ -129,7 +163,11 @@
     </section>
 
     <aside class="panel right" id="rightPanel">
-      <h3>Projet</h3>
+      <div class="panel-intro">
+        <span class="panel-kicker">Pilotage</span>
+        <h3>Projet</h3>
+        <p>Paramètres, calques, audit et versions dans un panneau plus structuré.</p>
+      </div>
       <div class="row">
         <select id="projectSelect"></select>
         <button id="newProjectBtn">New</button><button id="renameProjectBtn">Renommer</button>
@@ -173,7 +211,6 @@
       <button id="createSnapshotBtn">Créer version</button>
       <div id="snapshotsBox"></div>
 
-      
       <h3>Règles & Données</h3>
       <label>Langue <select id="langToggle"><option value="fr">FR</option><option value="en">EN</option></select></label>
       <label>Profil actif <select id="profileSelect"></select></label>
