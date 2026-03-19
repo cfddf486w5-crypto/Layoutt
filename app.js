@@ -478,11 +478,18 @@ function positionMenuDropdown(group){
   if(!dropdown || !trigger) return;
   resetMenuPosition(dropdown);
   const mobileMode=window.matchMedia('(max-width: 1000px)').matches;
-  if(mobileMode) return;
   const margin=12;
   const viewportWidth=window.innerWidth;
   const viewportHeight=window.innerHeight;
   const triggerRect=trigger.getBoundingClientRect();
+  if(mobileMode){
+    const top=Math.min(triggerRect.bottom+14, viewportHeight-160);
+    dropdown.style.top=`${Math.max(72, top)}px`;
+    dropdown.style.left='';
+    dropdown.style.right='';
+    dropdown.style.bottom='';
+    return;
+  }
   const dropdownRect=dropdown.getBoundingClientRect();
   const groupRect=group.getBoundingClientRect();
   const naturalTop=triggerRect.bottom-groupRect.top+8;

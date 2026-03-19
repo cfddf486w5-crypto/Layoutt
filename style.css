@@ -1,11 +1,12 @@
 :root{--bg:#0f1117;--panel:#171b23;--text:#e9edf3;--muted:#8f98a8;--accent:#3b82f6;--border:#2a3242}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text)}
 .topbar{padding:.6rem .8rem;background:#121620;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:30}
-.topbar-main{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.topbar-main{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
 .topbar strong{font-size:clamp(1rem,2vw,1.2rem)}
+.app-title{flex:1 1 auto;text-align:center;letter-spacing:-.02em}
 button,input,select{background:#111722;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:.4rem .55rem;min-height:44px}
 button{cursor:pointer}.toolbar{display:flex;gap:.35rem;flex-wrap:wrap}
-.menu-bar{display:flex;gap:.45rem;align-items:center;flex:1 1 480px;flex-wrap:wrap}
+.menu-bar{display:flex;gap:.55rem;align-items:center;flex:1 1 480px;flex-wrap:wrap}
 .menu-group{position:relative}
 .menu-trigger,.menu-item,.menu-subtoggle{background:#101722;border:1px solid var(--border);color:var(--text)}
 .menu-trigger{min-width:92px;font-weight:600}
@@ -45,7 +46,10 @@ canvas{position:absolute;inset:0}
 .floating-actions{position:absolute;right:.5rem;bottom:4.6rem;background:#111827e8;border:1px solid var(--border);border-radius:10px;padding:.3rem;display:flex;gap:.3rem;z-index:8}
 .precision-pad{position:absolute;left:.5rem;bottom:4.6rem;background:#111827e8;border:1px solid var(--border);border-radius:10px;padding:.3rem;z-index:8}
 .precision-pad>div{display:flex;gap:.3rem;justify-content:center}
-.drawer-toggle{display:inline-flex}
+.drawer-toggle{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;padding:.8rem 1rem;border-radius:20px;background:linear-gradient(180deg,#141b29,#111722);box-shadow:inset 0 0 0 1px rgba(120,145,185,.06)}
+.menu-trigger{padding:.9rem 1rem;min-height:64px;border-radius:18px;background:linear-gradient(180deg,#131a28,#101722);box-shadow:inset 0 0 0 1px rgba(120,145,185,.05)}
+.menu-group.open .menu-trigger{border-color:#44526b;background:linear-gradient(180deg,#182131,#111a28)}
+.menu-item,.menu-subtoggle{min-height:58px;border-radius:16px;padding:.9rem 1rem;font-size:1rem}
 .history-item{font-size:.74rem;padding:.25rem .3rem;border:1px solid var(--border);border-radius:8px;margin:.2rem 0}
 .mini-map{position:absolute;right:.5rem;top:2.6rem;width:130px;height:90px;background:#0b1220d9;border:1px solid var(--border);border-radius:8px;z-index:6}
 body.presentation .panel,body.presentation .topbar{display:none}
@@ -56,7 +60,6 @@ body.presentation .statusbar{top:.2rem}
   .right{right:0;left:auto;transform:translateX(105%)}
   .left.open,.right.open{transform:translateX(0)}
   .quickbar{display:flex}.topbar{padding-top:calc(.6rem + env(safe-area-inset-top))}
-  .drawer-toggle{display:inline-flex}
 }
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #67e8f9;outline-offset:1px}
 .hidden{display:none!important}
@@ -98,23 +101,37 @@ body.standalone .layout{height:calc((var(--vh, 1vh) * 100) - 70px - var(--safe-b
 @media(max-width:1000px){
   .left,.right{top:calc(70px + var(--safe-top));padding-bottom:calc(1.2rem + var(--safe-bottom));backdrop-filter:blur(10px)}
   .quickbar{left:50%;right:auto;max-width:min(96vw,760px);overflow:auto}
-  .menu-bar{flex:1 1 100%;order:3}
-  .menu-group{flex:1 1 calc(50% - .45rem)}
+  .topbar-main{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"left right" "title title" "menus menus";align-items:center}
+  #toggleLeftDrawer{grid-area:left;justify-self:start}
+  #toggleRightDrawer{grid-area:right;justify-self:end}
+  .app-title{grid-area:title;margin:0;padding:.15rem 0 .25rem;font-size:clamp(1.1rem,3vw,1.45rem);text-align:center}
+  .menu-bar{grid-area:menus;flex:1 1 100%;order:3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:.8rem .9rem}
+  .menu-group{min-width:0}
   .menu-trigger{width:100%}
-  .menu-dropdown{position:fixed;left:max(.8rem,var(--safe-left));right:max(.8rem,var(--safe-right));top:calc(68px + var(--safe-top));min-width:auto;max-width:none;max-height:calc(100vh - 5.5rem - var(--safe-top) - var(--safe-bottom))}
+  .menu-dropdown{position:fixed;left:max(.8rem,var(--safe-left));right:max(.8rem,var(--safe-right));top:calc(170px + var(--safe-top));min-width:auto;max-width:none;max-height:calc(100vh - 12.5rem - var(--safe-top) - var(--safe-bottom));border-radius:28px;padding:1rem}
 }
 @media(max-width:720px){
-  .topbar-main>strong{flex:1 1 auto;font-size:1rem}
-  .topbar-main{align-items:flex-start}
+  .topbar{padding-left:max(.65rem,var(--safe-left));padding-right:max(.65rem,var(--safe-right))}
+  .topbar-main{gap:.9rem .75rem;grid-template-columns:minmax(0,1fr) auto}
   .toolbar{width:100%;overflow:auto;padding-bottom:.15rem;scrollbar-width:none}
   .toolbar::-webkit-scrollbar{display:none}
   .toolbar button{white-space:nowrap}
-  .menu-bar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
-  .menu-group{min-width:0}
-  .menu-dropdown{top:calc(118px + var(--safe-top))}
+  .drawer-toggle{min-width:0;padding:.85rem 1rem;border-radius:20px;font-size:1rem}
+  .app-title{font-size:clamp(1rem,4.8vw,1.55rem);line-height:1.15}
+  .menu-bar{gap:.8rem}
+  .menu-trigger{min-height:72px;font-size:1.05rem}
+  .menu-dropdown{top:calc(208px + var(--safe-top));padding:1.15rem .95rem 1.25rem;max-height:calc(100vh - 15rem - var(--safe-top) - var(--safe-bottom))}
   .tool-grid{grid-template-columns:1fr 1fr}
   .statusbar{left:max(.5rem,var(--safe-left));right:max(.5rem,var(--safe-right));top:calc(.5rem + var(--safe-top));max-width:none}
   .floating-actions{left:.5rem;right:.5rem;justify-content:space-between;overflow:auto}
   .precision-pad{left:auto;right:.5rem}
   .pwa-banner{flex-direction:column;align-items:stretch}
+}
+@media(max-width:460px){
+  .drawer-toggle{padding:.85rem .95rem;font-size:.96rem}
+  .app-title{font-size:clamp(.96rem,4.6vw,1.4rem)}
+  .menu-bar{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .menu-trigger{min-height:68px;padding:.85rem .8rem}
+  .menu-item,.menu-subtoggle{min-height:54px;padding:.85rem .9rem}
+  .menu-dropdown{top:calc(200px + var(--safe-top));left:max(.65rem,var(--safe-left));right:max(.65rem,var(--safe-right))}
 }
