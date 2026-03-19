@@ -1,11 +1,17 @@
 # DL Layout Editor — Pro
 
-Application web offline-first (sans backend) pour éditer un plan d'entrepôt en grille, avec focus PC + iPhone.
+Application web offline-first (sans backend) pour éditer un plan d'entrepôt en grille, avec focus PC + iPhone et installation PWA.
 
 ## Lancer
-1. Ouvrir `index.html` dans un navigateur moderne (Safari iPhone ou desktop).
+1. Ouvrir `index.html` dans un navigateur moderne (Safari iPhone ou desktop) ou servir le dossier en HTTP local pour activer le service worker PWA.
 2. L'application sauvegarde automatiquement les projets en `localStorage` (autosave debounced pour limiter les écritures).
 3. Utiliser Export/Import JSON pour backup externe.
+
+## PWA iPhone / mobile
+- Meta tags iPhone ajoutés: mode standalone, status bar translucide, icônes Apple + thème sombre.
+- Bannière d'aide intégrée: sur iPhone, elle rappelle `Partager -> Ajouter à l'écran d'accueil`; sur navigateurs compatibles, elle expose le bouton d'installation.
+- Hauteurs, safe areas et panneaux prennent en compte le notch / Dynamic Island / barre Home via `env(safe-area-inset-*)`.
+- Le service worker met maintenant en cache le shell réel de l'application (`index.html`, `style.css`, `app.js`, `data/tileCatalog.js`, `view3d.js`, manifest et icônes), puis les assets utilisés à la demande.
 
 ## Outils
 - Sélection, Pinceau, Gomme, Ligne, Rectangle, Remplissage, Panoramique, Pipette.
@@ -81,6 +87,7 @@ Validation import:
 6. Vérifier export/import JSON (schemaVersion conservée).
 7. Vérifier export PNG.
 8. Vérifier iPhone: pinch zoom, pan 2 doigts, drawers, barre flottante.
+9. Vérifier installation PWA: bannière visible, ajout écran d'accueil iPhone, lancement standalone, fonctionnement offline après chargement initial.
 
 ## Pack C/D/E ajouté (métier + iPhone + perf)
 - Tags avancés: `name:category:color` dans Propriétés + tags simples.

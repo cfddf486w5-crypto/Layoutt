@@ -62,3 +62,35 @@ body.iphone-mode .panel.left, body.iphone-mode .panel.right{position:fixed;botto
 body.perf-mode *{box-shadow:none!important;text-shadow:none!important;transition:none!important}
 .fps-debug{position:absolute;right:.5rem;top:.5rem;background:#000c;color:#86efac;padding:.2rem .35rem;border-radius:6px;font-size:.7rem;z-index:6}
 .diff-highlight{outline:2px dashed #f43f5e;outline-offset:-2px}
+
+
+:root{--safe-top:env(safe-area-inset-top,0px);--safe-right:env(safe-area-inset-right,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--vh:1vh}
+html,body{min-height:100%;overscroll-behavior:none}
+body{padding-left:var(--safe-left);padding-right:var(--safe-right);padding-bottom:var(--safe-bottom);-webkit-tap-highlight-color:transparent}
+.topbar{padding-top:calc(.6rem + var(--safe-top));padding-left:max(.8rem,var(--safe-left));padding-right:max(.8rem,var(--safe-right))}
+.layout{height:calc((var(--vh, 1vh) * 100) - 70px - var(--safe-top) - var(--safe-bottom));min-height:420px}
+.panel{padding-bottom:calc(.95rem + var(--safe-bottom))}
+#toast{bottom:calc(1rem + var(--safe-bottom));max-width:min(92vw,560px)}
+.quickbar{bottom:calc(.6rem + var(--safe-bottom))}
+.floating-actions,.precision-pad{bottom:calc(4.6rem + var(--safe-bottom))}
+.pwa-banner{position:fixed;left:max(.75rem,var(--safe-left));right:max(.75rem,var(--safe-right));bottom:calc(.8rem + var(--safe-bottom));display:flex;gap:.75rem;align-items:flex-end;justify-content:space-between;background:#0f172af2;border:1px solid var(--border);border-radius:16px;padding:.85rem 1rem;z-index:50;box-shadow:0 16px 44px rgba(0,0,0,.35)}
+.pwa-banner p{margin:.35rem 0 0;font-size:.86rem;color:#cbd5e1}
+.pwa-banner-actions{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end}
+body.pwa-installed .pwa-banner{display:none!important}
+body.standalone .topbar{position:sticky}
+body.standalone .layout{height:calc((var(--vh, 1vh) * 100) - 70px - var(--safe-bottom))}
+@media (display-mode: standalone){body:not(.browser-mode) .pwa-banner{display:none!important}}
+@media(max-width:1000px){
+  .left,.right{top:calc(70px + var(--safe-top));padding-bottom:calc(1.2rem + var(--safe-bottom));backdrop-filter:blur(10px)}
+  .quickbar{left:50%;right:auto;max-width:min(96vw,760px);overflow:auto}
+}
+@media(max-width:720px){
+  .topbar>strong{flex:1 1 100%;font-size:1rem}
+  .toolbar{width:100%;overflow:auto;padding-bottom:.15rem;scrollbar-width:none}
+  .toolbar::-webkit-scrollbar{display:none}
+  .toolbar button{white-space:nowrap}
+  .statusbar{left:max(.5rem,var(--safe-left));right:max(.5rem,var(--safe-right));top:calc(.5rem + var(--safe-top));max-width:none}
+  .floating-actions{left:.5rem;right:.5rem;justify-content:space-between;overflow:auto}
+  .precision-pad{left:auto;right:.5rem}
+  .pwa-banner{flex-direction:column;align-items:stretch}
+}

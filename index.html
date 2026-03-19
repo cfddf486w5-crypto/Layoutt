@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>DL Layout Editor — Pro</title>
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DL Layout" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="application-name" content="DL Layout Editor — Pro" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="./icon-512.png" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
@@ -146,6 +157,17 @@
   </main>
 
   <div id="toast"></div>
+
+  <section class="pwa-banner hidden" id="pwaBanner" aria-live="polite">
+    <div>
+      <strong id="pwaBannerTitle">Mode app disponible</strong>
+      <p id="pwaBannerText">Ajoutez cette app à l'écran d'accueil pour un usage plein écran sur iPhone.</p>
+    </div>
+    <div class="pwa-banner-actions">
+      <button id="pwaInstallBtn" class="hidden">Installer</button>
+      <button id="pwaDismissBtn">Plus tard</button>
+    </div>
+  </section>
 
   <script src="./data/tileCatalog.js"></script>
   <script src="./app.js"></script>

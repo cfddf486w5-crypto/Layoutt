@@ -1,56 +1,60 @@
-// SHOP Layout – Service Worker (V10)
-const CACHE_NAME = 'shop-layout-v11-2026-02-24';
-const APP_SHELL = [
+const CACHE_NAME = 'dl-layout-editor-v12-2026-03-18';
+const CORE_ASSETS = [
   './',
   './index.html',
+  './style.css',
+  './app.js',
+  './data/tileCatalog.js',
+  './view3d.js',
   './manifest.webmanifest',
-  './service-worker.js',
+  './apple-touch-icon.png',
   './icon-192.png',
   './icon-512.png',
-  './apple-touch-icon.png',
-  './layout-langelier.jpg',
-  './src/main.js',
-  './src/model/grid.js',
-  './src/model/layoutState.js',
-  './src/model/caseTypes.js',
-  './src/model/binModels.js',
-  './src/ui/render.js',
-  './src/services/storage.js',
-  './src/services/export.js',
-  './src/audit/index.js',
-  './src/adapters/visionAdapter.js'
+  './layout-langelier.jpg'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
+      .then((cache) => cache.addAll(CORE_ASSETS))
       .then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : Promise.resolve())))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.map((key) => (key !== CACHE_NAME ? caches.delete(key) : Promise.resolve()))))
+      .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
 
-  const url = new URL(req.url);
+  const response = await fetch(request);
+  if (response && response.ok) {
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  if (req.mode === 'navigate') {
+  if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
-        .then((resp) => {
-          const copy = resp.clone();
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put('./index.html', copy));
-          return resp;
+          return response;
         })
         .catch(() => caches.match('./index.html'))
     );
@@ -58,23 +62,15 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req)
-        .then((resp) => {
-          if (resp && resp.status === 200) {
-            const copy = resp.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          }
-          return resp;
-        })
-        .catch(() => caches.match('./index.html'));
-    })
+    cacheFirst(request).catch(() => caches.match('./index.html'))
   );
 });
 
-
 self.addEventListener('message', (event) => {
-  if(event.data?.type !== 'CACHE_WARMUP') return;
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+    return;
+  }
+  if (event.data?.type !== 'CACHE_WARMUP') return;
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)));
 });

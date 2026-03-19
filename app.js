@@ -48,6 +48,8 @@ const state = {
 };
 let autosaveTimer = 0;
 let lastTouchTap = { time: 0, x: 0, y: 0 };
+let deferredInstallPrompt = null;
+const pwaState = { dismissed:false, shown:false };
 
 function idx(x,y){return y*state.gridW+x}
 function key(x,y){return `${x},${y}`}
@@ -411,7 +413,55 @@ function buildWarnings(){
 function bindStateToInputs(){
   gridW.value=state.gridW; gridH.value=state.gridH; cellSize.value=state.cellSize; cellRealSize.value=state.cellRealSize;
   bpOpacity.value=state.blueprint.opacity; bpScale.value=state.blueprint.scale; bpBrightness.value=state.blueprint.brightness; bpContrast.value=state.blueprint.contrast;
+  autoHidePanels.checked=state.autoHidePanels;
+  perfMode.checked=state.perfMode;
+  fpsDebug.checked=state.fpsDebug;
+  document.body.classList.toggle('iphone-mode', !!state.iphoneMode);
+  document.body.classList.toggle('perf-mode', !!state.perfMode);
 }
+
+function isStandaloneMode(){return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;}
+function isiPhoneLike(){return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);}
+function updateViewportHeightVar(){
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+function applyDisplayModeClass(){
+  const standalone = isStandaloneMode();
+  document.body.classList.toggle('standalone', standalone);
+  document.body.classList.toggle('browser-mode', !standalone);
+}
+function markPwaInstalled(){
+  localStorage.setItem(`${STORAGE_ROOT}:pwaInstalled`, '1');
+  document.body.classList.add('pwa-installed');
+}
+function updatePwaBanner(){
+  const banner = document.getElementById('pwaBanner');
+  const installBtn = document.getElementById('pwaInstallBtn');
+  const text = document.getElementById('pwaBannerText');
+  if(!banner || pwaState.dismissed){ banner?.classList.add('hidden'); return; }
+  const installed = localStorage.getItem(`${STORAGE_ROOT}:pwaInstalled`) === '1' || isStandaloneMode();
+  if(installed){ markPwaInstalled(); banner.classList.add('hidden'); return; }
+  const iphone = isiPhoneLike();
+  installBtn.classList.toggle('hidden', !deferredInstallPrompt);
+  text.textContent = iphone
+    ? "Sur iPhone: Safari → Partager → Ajouter à l'écran d'accueil pour ouvrir l'éditeur comme une app."
+    : deferredInstallPrompt
+      ? "Installez l'app pour garder le layout hors ligne avec une ouverture plein écran."
+      : "Le mode app hors ligne est prêt. Ajoutez-la à l'écran d'accueil ou utilisez l'installation du navigateur.";
+  banner.classList.remove('hidden');
+  pwaState.shown = true;
+}
+async function registerServiceWorker(){
+  if(!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+  try{
+    const registration = await navigator.serviceWorker.register('./service-worker.js');
+    registration.update?.();
+  }catch(err){
+    logError(err.message,'serviceWorker');
+  }
+}
+
 function updateStatus(){
   const hc=state.hoverCell; const dim=state.selected.size?`Sel:${state.selected.size}`:'Sel:0';
   statusBar.textContent=`Tool:${state.activeTool} | Zoom:${state.zoom.toFixed(2)} | Snap:${state.snap.grid?'on':'off'} | ${hc?`x:${hc.x} y:${hc.y}`:'x:- y:-'} | ${dim} | ${state.projectStatus}`;
@@ -453,7 +503,7 @@ function bindUI(){
   };
   document.getElementById('toggleLeftDrawer').onclick=()=>leftPanel.classList.toggle('open');
   document.getElementById('toggleRightDrawer').onclick=()=>rightPanel.classList.toggle('open');
-  toggleIphoneModeBtn.onclick=()=>{state.iphoneMode=!state.iphoneMode; document.body.classList.toggle('iphone-mode',state.iphoneMode);};
+  toggleIphoneModeBtn.onclick=()=>{state.iphoneMode=!state.iphoneMode; document.body.classList.toggle('iphone-mode',state.iphoneMode); saveActiveProject();};
 
   document.getElementById('snapGrid').onchange=e=>state.snap.grid=e.target.checked;
   document.getElementById('snapObjects').onchange=e=>state.snap.objects=e.target.checked;
@@ -510,12 +560,16 @@ function bindUI(){
   repairProjectBtn.onclick=()=>{repairProjectData(state); buildWarnings(); saveActiveProject(); toast('Projet réparé');};
   reviewModeBtn.onclick=()=>{state.reviewMode=!state.reviewMode; toast('Review '+(state.reviewMode?'ON':'OFF'));};
   compareSnapshotBtn.onclick=()=>{if(state.snapshots.length<2){toast('2 versions min'); return;} const ai=Math.max(1,Math.min(state.snapshots.length,+(prompt('Version A (index)','1')||1)))-1; const bi=Math.max(1,Math.min(state.snapshots.length,+(prompt('Version B (index)','2')||2)))-1; const a=state.snapshots[ai]?.data?.cells||[]; const b=state.snapshots[bi]?.data?.cells||[]; state.diffCells=[]; for(let i=0;i<Math.min(a.length,b.length);i++) if(a[i]!==b[i]) state.diffCells.push(i); toast(`Diff: ${state.diffCells.length}`); renderAll();};
-  autoHidePanels.onchange=e=>{state.autoHidePanels=e.target.checked;};
+  autoHidePanels.onchange=e=>{state.autoHidePanels=e.target.checked; saveActiveProject();};
   focusMode.onchange=e=>document.body.classList.toggle('focus-mode',e.target.checked);
-  perfMode.onchange=e=>{state.perfMode=e.target.checked; document.body.classList.toggle('perf-mode',state.perfMode);};
-  fpsDebug.onchange=e=>{state.fpsDebug=e.target.checked;};
+  perfMode.onchange=e=>{state.perfMode=e.target.checked; document.body.classList.toggle('perf-mode',state.perfMode); saveActiveProject();};
+  fpsDebug.onchange=e=>{state.fpsDebug=e.target.checked; saveActiveProject();};
 
-  window.addEventListener('resize',renderAll);
+  window.addEventListener('resize',()=>{updateViewportHeightVar(); renderAll();});
+  window.addEventListener('orientationchange',()=>{setTimeout(()=>{updateViewportHeightVar(); renderAll();}, 120);});
+  window.addEventListener('appinstalled',()=>{markPwaInstalled(); applyDisplayModeClass(); updatePwaBanner(); toast('App installée');});
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault(); deferredInstallPrompt=e; updatePwaBanner();});
+  window.addEventListener('DOMContentLoaded',updatePwaBanner);
   window.addEventListener('keydown',e=>{
     const cmd=e.ctrlKey||e.metaKey;
     if(e.code==='Space'){ if(!state.isSpacePan){state.prevTool=state.activeTool; state.tempPan=true; setTool('pan'); state.isSpacePan=true;} e.preventDefault();}
@@ -567,6 +621,16 @@ function bindUI(){
   floatingActions.querySelector('[data-action="delete"]').onclick=deleteSelection;
   floatingActions.querySelector('[data-action="rotate"]').onclick=()=>transformSelection('rotate');
   floatingActions.querySelector('[data-action="props"]').onclick=()=>rightPanel.classList.add('open');
+
+  document.getElementById('pwaDismissBtn').onclick=()=>{pwaState.dismissed = true; document.getElementById('pwaBanner').classList.add('hidden');};
+  document.getElementById('pwaInstallBtn').onclick=async()=>{
+    if(!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const choice = await deferredInstallPrompt.userChoice.catch(()=>null);
+    if(choice?.outcome === 'accepted') markPwaInstalled();
+    deferredInstallPrompt = null;
+    updatePwaBanner();
+  };
 }
 
 function demo(){
@@ -588,9 +652,15 @@ let fpsTick=0,lastFpsTime=performance.now(),frames=0;
 function updateFps(){frames++; const now=performance.now(); if(now-lastFpsTime>500){fpsTick=Math.round((frames*1000)/(now-lastFpsTime)); frames=0; lastFpsTime=now; let el=document.getElementById('fpsDebugEl'); if(state.fpsDebug){if(!el){el=document.createElement('div'); el.id='fpsDebugEl'; el.className='fps-debug'; document.querySelector('.editor').appendChild(el);} el.textContent=`FPS ${fpsTick}`;} else if(el){el.remove();}} requestAnimationFrame(updateFps);}
 requestAnimationFrame(updateFps);
 
+updateViewportHeightVar();
+applyDisplayModeClass();
 bindUI();
 if(!localStorage.getItem(STORAGE_ROOT)){demo();}
 ensureProject();
 renderTools(); renderPalette(); renderLayers(); renderAll(); renderProps(); buildWarnings(); updateStatus();
+updatePwaBanner();
+registerServiceWorker();
+window.matchMedia('(display-mode: standalone)').addEventListener?.('change',()=>{applyDisplayModeClass(); updatePwaBanner();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){updateViewportHeightVar(); applyDisplayModeClass(); updatePwaBanner();}});
 setInterval(()=>saveActiveProject(true), 10000);
 })();
