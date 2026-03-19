@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>DL Layout Editor — Pro</title>
-  <meta name="theme-color" content="#0b1220" />
+  <meta name="theme-color" content="#dbeafe" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="DL Layout" />
@@ -18,187 +18,228 @@
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-main">
-      <button id="toggleLeftDrawer" class="drawer-toggle" aria-label="Ouvrir palette">☰ Palette</button>
-      <strong class="app-title">DL Layout Editor — Pro</strong>
-      <div class="menu-bar" aria-label="Menus principaux">
-        <div class="menu-group">
-          <button class="menu-trigger" data-menu-target="toolsMenu" aria-haspopup="true" aria-expanded="false">Outils</button>
-          <div class="menu-dropdown" id="toolsMenu">
-            <button id="measureBtn" class="menu-item" title="Mesure (M)">Mesure</button>
-            <button id="multiBtn" class="menu-item" title="Mode multi-sélection iPhone">Multi</button>
-            <div class="menu-subgroup">
-              <button class="menu-subtoggle" type="button" aria-expanded="true">Outils de dessin</button>
-              <div class="menu-subpanel">
-                <div class="tool-grid" id="toolButtons"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-main">
+        <div class="brand-block">
+          <div class="brand-copy">
+            <span class="eyebrow">Studio layout</span>
+            <strong class="app-title">DL Layout Editor — Pro</strong>
+            <p class="app-subtitle">Édition, contrôle et export de plans dans une interface plus claire, plus stable et pensée pour la production.</p>
+          </div>
+          <div class="topbar-actions">
+            <button id="toggleLeftDrawer" class="drawer-toggle" aria-label="Ouvrir palette">☰ Palette</button>
+            <button id="toggleRightDrawer" class="drawer-toggle secondary" aria-label="Ouvrir panneau projet">⚙ Projet</button>
+          </div>
+        </div>
+
+        <div class="menu-bar" aria-label="Menus principaux">
+          <div class="menu-group">
+            <button class="menu-trigger" data-menu-target="toolsMenu" aria-haspopup="true" aria-expanded="false">
+              <span class="menu-label">Outils</span>
+              <small>Dessin & sélection</small>
+            </button>
+            <div class="menu-dropdown" id="toolsMenu">
+              <button id="measureBtn" class="menu-item" title="Mesure (M)">Mesure</button>
+              <button id="multiBtn" class="menu-item" title="Mode multi-sélection iPhone">Multi</button>
+              <div class="menu-subgroup">
+                <button class="menu-subtoggle" type="button" aria-expanded="true">Outils de dessin</button>
+                <div class="menu-subpanel">
+                  <div class="tool-grid" id="toolButtons"></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="menu-group">
-          <button class="menu-trigger" data-menu-target="viewMenu" aria-haspopup="true" aria-expanded="false">Vue</button>
-          <div class="menu-dropdown" id="viewMenu">
-            <button id="recenterBtn" class="menu-item" title="Recentrer la vue">Recentrer</button>
-            <button id="fitBtn" class="menu-item" title="Ajuster au contenu">Fit</button>
-            <button id="toggle3dBtn" class="menu-item" title="Vue 3D">3D</button>
-            <button id="toggleIphoneModeBtn" class="menu-item" aria-label="Mode iPhone">📱 Mode iPhone</button>
-          </div>
-        </div>
-        <div class="menu-group">
-          <button class="menu-trigger" data-menu-target="editMenu" aria-haspopup="true" aria-expanded="false">Édition</button>
-          <div class="menu-dropdown" id="editMenu">
-            <button id="undoBtn" class="menu-item" title="Undo (Ctrl/Cmd+Z)">Undo</button>
-            <button id="redoBtn" class="menu-item" title="Redo (Ctrl/Cmd+Y)">Redo</button>
-            <button id="saveBtn" class="menu-item" title="Sauvegarder local (Ctrl/Cmd+S)">Save</button>
-          </div>
-        </div>
-        <div class="menu-group">
-          <button class="menu-trigger" data-menu-target="exportMenu" aria-haspopup="true" aria-expanded="false">Export</button>
-          <div class="menu-dropdown" id="exportMenu">
-            <div class="menu-subgroup">
-              <button class="menu-subtoggle" type="button" aria-expanded="true">JSON</button>
-              <div class="menu-subpanel">
-                <button id="exportJsonBtn" class="menu-item" title="Exporter JSON">Export JSON</button>
-                <button id="importJsonBtn" class="menu-item" title="Importer JSON">Import JSON</button>
-                <button id="mergeJsonBtn" class="menu-item" title="Importer en fusion">Merge JSON</button>
-              </div>
+          <div class="menu-group">
+            <button class="menu-trigger" data-menu-target="viewMenu" aria-haspopup="true" aria-expanded="false">
+              <span class="menu-label">Vue</span>
+              <small>Navigation & aperçu</small>
+            </button>
+            <div class="menu-dropdown" id="viewMenu">
+              <button id="recenterBtn" class="menu-item" title="Recentrer la vue">Recentrer</button>
+              <button id="fitBtn" class="menu-item" title="Ajuster au contenu">Fit</button>
+              <button id="toggle3dBtn" class="menu-item" title="Vue 3D">3D</button>
+              <button id="toggleIphoneModeBtn" class="menu-item" aria-label="Mode iPhone">📱 Mode iPhone</button>
             </div>
-            <div class="menu-subgroup">
-              <button class="menu-subtoggle" type="button" aria-expanded="false">Fichiers</button>
-              <div class="menu-subpanel hidden">
-                <button id="exportCsvBtn" class="menu-item" title="Exporter bins CSV">Export CSV</button>
-                <button id="exportPdfBtn" class="menu-item" title="Rapport PDF">Export PDF</button>
-                <button id="exportPngBtn" class="menu-item" title="Exporter PNG">Export PNG</button>
-              </div>
+          </div>
+          <div class="menu-group">
+            <button class="menu-trigger" data-menu-target="editMenu" aria-haspopup="true" aria-expanded="false">
+              <span class="menu-label">Édition</span>
+              <small>Historique & sauvegarde</small>
+            </button>
+            <div class="menu-dropdown" id="editMenu">
+              <button id="undoBtn" class="menu-item" title="Undo (Ctrl/Cmd+Z)">Undo</button>
+              <button id="redoBtn" class="menu-item" title="Redo (Ctrl/Cmd+Y)">Redo</button>
+              <button id="saveBtn" class="menu-item" title="Sauvegarder local (Ctrl/Cmd+S)">Save</button>
             </div>
-            <input type="file" id="importJsonInput" accept="application/json" hidden />
+          </div>
+          <div class="menu-group">
+            <button class="menu-trigger" data-menu-target="exportMenu" aria-haspopup="true" aria-expanded="false">
+              <span class="menu-label">Export</span>
+              <small>JSON, PNG, PDF, CSV</small>
+            </button>
+            <div class="menu-dropdown" id="exportMenu">
+              <div class="menu-subgroup">
+                <button class="menu-subtoggle" type="button" aria-expanded="true">JSON</button>
+                <div class="menu-subpanel">
+                  <button id="exportJsonBtn" class="menu-item" title="Exporter JSON">Export JSON</button>
+                  <button id="importJsonBtn" class="menu-item" title="Importer JSON">Import JSON</button>
+                  <button id="mergeJsonBtn" class="menu-item" title="Importer en fusion">Merge JSON</button>
+                </div>
+              </div>
+              <div class="menu-subgroup">
+                <button class="menu-subtoggle" type="button" aria-expanded="false">Fichiers</button>
+                <div class="menu-subpanel hidden">
+                  <button id="exportCsvBtn" class="menu-item" title="Exporter bins CSV">Export CSV</button>
+                  <button id="exportPdfBtn" class="menu-item" title="Rapport PDF">Export PDF</button>
+                  <button id="exportPngBtn" class="menu-item" title="Exporter PNG">Export PNG</button>
+                </div>
+              </div>
+              <input type="file" id="importJsonInput" accept="application/json" hidden />
+            </div>
           </div>
         </div>
       </div>
-      <button id="toggleRightDrawer" class="drawer-toggle" aria-label="Ouvrir panneau projet">⚙ Projet</button>
-    </div>
-  </header>
+    </header>
 
-  <main class="layout">
-    <aside class="panel left" id="leftPanel">
-      <h3>Palette</h3>
-      <input id="searchInput" placeholder="Rechercher (porte, rack, P3...)" />
-      <div id="categoryTabs" class="tabs"></div>
-      <div id="recentBox"></div>
-      <div id="favoriteBox"></div>
-      <div id="paletteList" class="palette"></div>
-    </aside>
-
-    <section class="editor">
-      <div class="canvas-wrap" id="canvasWrap">
-        <canvas id="blueprintCanvas"></canvas>
-        <canvas id="gridCanvas"></canvas>
-      </div>
-      <div class="statusbar" id="statusBar"></div>
-      <div class="quickbar" id="quickbar"></div>
-      <div class="floating-actions hidden" id="floatingActions">
-        <button data-action="move">Déplacer</button>
-        <button data-action="duplicate">Dupliquer</button>
-        <button data-action="delete">Supprimer</button>
-        <button data-action="rotate">Rotate</button>
-        <button data-action="props">Props</button>
-      </div>
-      <div class="precision-pad hidden" id="precisionPad">
-        <button data-dx="0" data-dy="-1">↑</button>
-        <div><button data-dx="-1" data-dy="0">←</button><button data-dx="1" data-dy="0">→</button></div>
-        <button data-dx="0" data-dy="1">↓</button>
-      </div>
-
-      <div class="view3d hidden" id="view3dPanel">
-        <canvas id="view3dCanvas"></canvas>
-        <div class="view3d-controls">
-          <button id="walkModeBtn">Walk: OFF</button>
-          <button id="reset3dBtn">Reset view</button>
-          <button id="focus3dBtn">Focus</button>
-          <label>Hauteur murs <input id="wallHeightInput" type="range" min="2" max="4" step="0.1" value="2.6" /></label>
-          <label>Épaisseur murs <input id="wallThicknessInput" type="range" min="0.1" max="0.8" step="0.05" value="0.2" /></label>
-          <label><input id="showBp3dInput" type="checkbox" checked /> Afficher blueprint au sol</label>
-          <label>Qualité <select id="quality3dInput"><option value="high">High</option><option value="low">Low</option></select></label>
+    <main class="layout">
+      <aside class="panel left" id="leftPanel">
+        <div class="panel-head">
+          <div>
+            <span class="panel-kicker">Bibliothèque</span>
+            <h3>Palette</h3>
+          </div>
         </div>
-        <div class="view3d-info" id="view3dInfo">Sélectionnez un objet.</div>
-        <div class="view3d-legend" id="view3dLegend"></div>
-      </div>
+        <input id="searchInput" placeholder="Rechercher (porte, rack, P3...)" />
+        <div id="categoryTabs" class="tabs"></div>
+        <div id="recentBox"></div>
+        <div id="favoriteBox"></div>
+        <div id="paletteList" class="palette"></div>
+      </aside>
 
-      <div id="contextMenu" class="context-menu hidden"></div>
-    </section>
+      <section class="editor">
+        <div class="editor-header">
+          <div>
+            <span class="panel-kicker">Espace de travail</span>
+            <h2>Canvas principal</h2>
+          </div>
+          <p>Manipulez le plan, gérez les couches et gardez un accès rapide aux actions de précision.</p>
+        </div>
+        <div class="canvas-stage">
+          <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="blueprintCanvas"></canvas>
+            <canvas id="gridCanvas"></canvas>
+          </div>
+          <div class="statusbar" id="statusBar"></div>
+          <div class="quickbar" id="quickbar"></div>
+          <div class="floating-actions hidden" id="floatingActions">
+            <button data-action="move">Déplacer</button>
+            <button data-action="duplicate">Dupliquer</button>
+            <button data-action="delete">Supprimer</button>
+            <button data-action="rotate">Rotate</button>
+            <button data-action="props">Props</button>
+          </div>
+          <div class="precision-pad hidden" id="precisionPad">
+            <button data-dx="0" data-dy="-1">↑</button>
+            <div><button data-dx="-1" data-dy="0">←</button><button data-dx="1" data-dy="0">→</button></div>
+            <button data-dx="0" data-dy="1">↓</button>
+          </div>
 
-    <aside class="panel right" id="rightPanel">
-      <h3>Projet</h3>
-      <div class="row">
-        <select id="projectSelect"></select>
-        <button id="newProjectBtn">New</button><button id="renameProjectBtn">Renommer</button>
-      </div>
-      <div class="row"><button id="duplicateProjectBtn">Dupliquer</button><button id="deleteProjectBtn">Supprimer</button></div>
-      <label>Grille W <input id="gridW" type="number" min="10" max="300" value="60" /></label>
-      <label>Grille H <input id="gridH" type="number" min="10" max="300" value="40" /></label>
-      <label>Taille cellule <input id="cellSize" type="number" min="8" max="64" value="24" /></label>
-      <label>Échelle (1 cellule =) <input id="cellRealSize" type="number" min="0.1" step="0.1" value="100" /></label>
-      <button id="resizeGridBtn">Appliquer</button>
+          <div class="view3d hidden" id="view3dPanel">
+            <canvas id="view3dCanvas"></canvas>
+            <div class="view3d-controls">
+              <button id="walkModeBtn">Walk: OFF</button>
+              <button id="reset3dBtn">Reset view</button>
+              <button id="focus3dBtn">Focus</button>
+              <label>Hauteur murs <input id="wallHeightInput" type="range" min="2" max="4" step="0.1" value="2.6" /></label>
+              <label>Épaisseur murs <input id="wallThicknessInput" type="range" min="0.1" max="0.8" step="0.05" value="0.2" /></label>
+              <label><input id="showBp3dInput" type="checkbox" checked /> Afficher blueprint au sol</label>
+              <label>Qualité <select id="quality3dInput"><option value="high">High</option><option value="low">Low</option></select></label>
+            </div>
+            <div class="view3d-info" id="view3dInfo">Sélectionnez un objet.</div>
+            <div class="view3d-legend" id="view3dLegend"></div>
+          </div>
 
-      <h3>Snapping & Vue</h3>
-      <label><input id="snapGrid" type="checkbox" checked /> Snap grille</label>
-      <label><input id="snapObjects" type="checkbox" checked /> Snap bords</label>
-      <label><input id="snapCenters" type="checkbox" checked /> Snap centres</label>
-      <label><input id="snapGuides" type="checkbox" checked /> Snap guides</label>
-      <label><input id="showMiniMap" type="checkbox" /> Mini-map</label>
-      <label><input id="presentationMode" type="checkbox" /> Mode présentation</label>
+          <div id="contextMenu" class="context-menu hidden"></div>
+        </div>
+      </section>
 
-      <h3>Calques</h3>
-      <div class="row"><button id="soloLayerBtn">Solo</button><select id="layerFilter"></select></div>
-      <div id="layersBox"></div>
+      <aside class="panel right" id="rightPanel">
+        <div class="panel-head">
+          <div>
+            <span class="panel-kicker">Configuration</span>
+            <h3>Projet</h3>
+          </div>
+        </div>
+        <div class="row">
+          <select id="projectSelect"></select>
+          <button id="newProjectBtn">New</button><button id="renameProjectBtn">Renommer</button>
+        </div>
+        <div class="row"><button id="duplicateProjectBtn">Dupliquer</button><button id="deleteProjectBtn">Supprimer</button></div>
+        <label>Grille W <input id="gridW" type="number" min="10" max="300" value="60" /></label>
+        <label>Grille H <input id="gridH" type="number" min="10" max="300" value="40" /></label>
+        <label>Taille cellule <input id="cellSize" type="number" min="8" max="64" value="24" /></label>
+        <label>Échelle (1 cellule =) <input id="cellRealSize" type="number" min="0.1" step="0.1" value="100" /></label>
+        <button id="resizeGridBtn">Appliquer</button>
 
-      <h3>Blueprint</h3>
-      <input type="file" id="blueprintInput" accept="image/png,image/jpeg" />
-      <label>Opacity <input id="bpOpacity" type="range" min="0" max="1" step="0.05" value="0.5" /></label>
-      <label>Scale <input id="bpScale" type="range" min="0.2" max="3" step="0.05" value="1" /></label>
-      <label>Luminosité <input id="bpBrightness" type="range" min="0.4" max="1.6" step="0.05" value="1" /></label>
-      <label>Contraste <input id="bpContrast" type="range" min="0.4" max="1.8" step="0.05" value="1" /></label>
-      <button id="bpLockBtn">Verrou blueprint: OFF</button>
-      <button id="bpCalibrateBtn">Calibrer blueprint</button>
+        <h3>Snapping & Vue</h3>
+        <label><input id="snapGrid" type="checkbox" checked /> Snap grille</label>
+        <label><input id="snapObjects" type="checkbox" checked /> Snap bords</label>
+        <label><input id="snapCenters" type="checkbox" checked /> Snap centres</label>
+        <label><input id="snapGuides" type="checkbox" checked /> Snap guides</label>
+        <label><input id="showMiniMap" type="checkbox" /> Mini-map</label>
+        <label><input id="presentationMode" type="checkbox" /> Mode présentation</label>
 
-      <h3>Propriétés</h3>
-      <div id="propsBox">Aucune sélection.</div>
-      <div class="row"><button id="deleteSelectionBtn">Supprimer</button><button id="duplicateSelectionBtn">Dupliquer</button></div>
-      <div class="row"><button id="applyTileSelectionBtn">Appliquer tile</button><button id="replaceTypeBtn">Remplacer type</button></div>
-      <div class="row"><button id="alignBtn">Aligner</button><button id="distributeBtn">Distribuer</button></div>
-      <div class="row"><button id="repeatBtn">Répéter</button><button id="historyBtn">Historique</button></div>
+        <h3>Calques</h3>
+        <div class="row"><button id="soloLayerBtn">Solo</button><select id="layerFilter"></select></div>
+        <div id="layersBox"></div>
 
-      <h3>Versions</h3>
-      <button id="createSnapshotBtn">Créer version</button>
-      <div id="snapshotsBox"></div>
+        <h3>Blueprint</h3>
+        <input type="file" id="blueprintInput" accept="image/png,image/jpeg" />
+        <label>Opacity <input id="bpOpacity" type="range" min="0" max="1" step="0.05" value="0.5" /></label>
+        <label>Scale <input id="bpScale" type="range" min="0.2" max="3" step="0.05" value="1" /></label>
+        <label>Luminosité <input id="bpBrightness" type="range" min="0.4" max="1.6" step="0.05" value="1" /></label>
+        <label>Contraste <input id="bpContrast" type="range" min="0.4" max="1.8" step="0.05" value="1" /></label>
+        <button id="bpLockBtn">Verrou blueprint: OFF</button>
+        <button id="bpCalibrateBtn">Calibrer blueprint</button>
 
-      
-      <h3>Règles & Données</h3>
-      <label>Langue <select id="langToggle"><option value="fr">FR</option><option value="en">EN</option></select></label>
-      <label>Profil actif <select id="profileSelect"></select></label>
-      <div class="row"><button id="newProfileBtn">Nouveau profil</button><button id="projectStatusBtn">Statut projet</button></div>
-      <label><input id="auditMode" type="checkbox" checked /> Mode audit</label>
-      <label><input id="ruleAisleWidth" type="checkbox" checked /> Règle allée min 2 cases</label>
-      <label><input id="ruleExitClear" type="checkbox" checked /> Règle issues dégagées</label>
-      <label><input id="ruleUnknownBin" type="checkbox" checked /> Règle bins connus</label>
-      <label><input id="ruleBinZone" type="checkbox" checked /> Règle bins avec zone</label>
-      <label><input id="ruleRackCapacity" type="checkbox" checked /> Règle racks capacité > 0</label>
-      <label><input id="rulePriority" type="checkbox" /> Règle priorité P1..P7 obligatoire</label>
-      <div class="row"><button id="runAuditBtn">Lancer audit</button><button id="repairProjectBtn">Réparer projet</button></div>
-      <div class="row"><button id="reviewModeBtn">Mode review</button><button id="compareSnapshotBtn">Comparer versions</button></div>
-      <div class="row"><button id="exportZoneCsvBtn">Export zones CSV</button><button id="exportLogsBtn">Export logs</button></div>
-      <label>Rule engine JSON <textarea id="rulesJsonInput" rows="4" placeholder='{"aisleMinWidth":true}'></textarea></label>
-      <button id="applyRulesJsonBtn">Appliquer rules JSON</button>
-      <label><input id="autoHidePanels" type="checkbox" /> Auto-hide panneaux (iPhone)</label>
-      <label><input id="focusMode" type="checkbox" /> Focus mode canvas</label>
-      <label><input id="perfMode" type="checkbox" /> Mode performance</label>
-      <label><input id="fpsDebug" type="checkbox" /> FPS debug</label>
+        <h3>Propriétés</h3>
+        <div id="propsBox">Aucune sélection.</div>
+        <div class="row"><button id="deleteSelectionBtn">Supprimer</button><button id="duplicateSelectionBtn">Dupliquer</button></div>
+        <div class="row"><button id="applyTileSelectionBtn">Appliquer tile</button><button id="replaceTypeBtn">Remplacer type</button></div>
+        <div class="row"><button id="alignBtn">Aligner</button><button id="distributeBtn">Distribuer</button></div>
+        <div class="row"><button id="repeatBtn">Répéter</button><button id="historyBtn">Historique</button></div>
 
-      <h3>Warnings</h3>
-      <ul id="warnings"></ul>
-    </aside>
-  </main>
+        <h3>Versions</h3>
+        <button id="createSnapshotBtn">Créer version</button>
+        <div id="snapshotsBox"></div>
+
+        <h3>Règles & Données</h3>
+        <label>Langue <select id="langToggle"><option value="fr">FR</option><option value="en">EN</option></select></label>
+        <label>Profil actif <select id="profileSelect"></select></label>
+        <div class="row"><button id="newProfileBtn">Nouveau profil</button><button id="projectStatusBtn">Statut projet</button></div>
+        <label><input id="auditMode" type="checkbox" checked /> Mode audit</label>
+        <label><input id="ruleAisleWidth" type="checkbox" checked /> Règle allée min 2 cases</label>
+        <label><input id="ruleExitClear" type="checkbox" checked /> Règle issues dégagées</label>
+        <label><input id="ruleUnknownBin" type="checkbox" checked /> Règle bins connus</label>
+        <label><input id="ruleBinZone" type="checkbox" checked /> Règle bins avec zone</label>
+        <label><input id="ruleRackCapacity" type="checkbox" checked /> Règle racks capacité &gt; 0</label>
+        <label><input id="rulePriority" type="checkbox" /> Règle priorité P1..P7 obligatoire</label>
+        <div class="row"><button id="runAuditBtn">Lancer audit</button><button id="repairProjectBtn">Réparer projet</button></div>
+        <div class="row"><button id="reviewModeBtn">Mode review</button><button id="compareSnapshotBtn">Comparer versions</button></div>
+        <div class="row"><button id="exportZoneCsvBtn">Export zones CSV</button><button id="exportLogsBtn">Export logs</button></div>
+        <label>Rule engine JSON <textarea id="rulesJsonInput" rows="4" placeholder='{"aisleMinWidth":true}'></textarea></label>
+        <button id="applyRulesJsonBtn">Appliquer rules JSON</button>
+        <label><input id="autoHidePanels" type="checkbox" /> Auto-hide panneaux (iPhone)</label>
+        <label><input id="focusMode" type="checkbox" /> Focus mode canvas</label>
+        <label><input id="perfMode" type="checkbox" /> Mode performance</label>
+        <label><input id="fpsDebug" type="checkbox" /> FPS debug</label>
+
+        <h3>Warnings</h3>
+        <ul id="warnings"></ul>
+      </aside>
+    </main>
+  </div>
 
   <div id="toast"></div>
 
